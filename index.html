@@ -185,10 +185,21 @@
       </div>
       <div>
         <label class="block text-xs font-semibold uppercase tracking-widest mb-2" style="color:#666;">
-          Course Date
+          Course Dates
         </label>
-        <input id="m-date" type="date"
-               class="dark-input w-full px-3 py-2.5 rounded-lg text-sm">
+        <div class="flex items-center gap-2">
+          <div class="flex-1">
+            <div class="text-xs mb-1" style="color:#555;">Start Date</div>
+            <input id="m-date" type="date"
+                   class="dark-input w-full px-3 py-2.5 rounded-lg text-sm">
+          </div>
+          <div class="pt-4" style="color:#444;">→</div>
+          <div class="flex-1">
+            <div class="text-xs mb-1" style="color:#555;">End Date</div>
+            <input id="m-date-end" type="date"
+                   class="dark-input w-full px-3 py-2.5 rounded-lg text-sm">
+          </div>
+        </div>
       </div>
       <div>
         <label class="block text-xs font-semibold uppercase tracking-widest mb-2" style="color:#666;">
@@ -353,7 +364,7 @@ function tasksFor(type) {
     { id:'sendEmailPax',      label:'Send Email to Participants',   section:'Inside Preparation' },
     { id:'contactTeacher',    label:'Contact Course Teacher',       section:'Inside Preparation' },
     { id:'auditorium',        label:'Auditorium',                   section:'Facilities', hasTrigger:true },
-    { id:'eveningCafeteria',  label:'Evening Cafeteria',            section:'Facilities' },
+    { id:'eveningCafeteria',  label:'Evening Cafeteria',            section:'Facilities', hasTrigger:true },
   ] : [];
   const ops = type === 'inside' ? [
     { id:'studioNeeded',      label:'Studio Needed',                section:'Operations', hasTrigger:true, hasInput:true },
@@ -373,6 +384,8 @@ function tasksFor(type) {
 function triggersFor(course) {
   const { type, status, tasks, sentNotifs, studioReqs } = course;
   const out = [];
+  const dtLine = courseDateTimeLine(course);
+  const dtSuffix = dtLine ? ` (${dtLine})` : '';
 
   if (type === 'outside' && tasks.prepareCerts && !sentNotifs.certReady) {
     out.push({
@@ -385,7 +398,7 @@ function triggersFor(course) {
       color: '#C8931F',
       bg: '#1a1200',
       border: '#3a2900',
-      message: `The certificates are ready to be collected from my office.`,
+      message: `The certificates for the course "${course.name}"${dtSuffix} are ready to be collected from my office.`,
     });
   }
 
@@ -403,7 +416,7 @@ function triggersFor(course) {
       message:
 `مرحباً،
 
-يُرجى العلم بأن الدورة التدريبية "${course.name}"${course.date ? ' بتاريخ ' + fmtDate(course.date) : ''} قد تم تفعيلها.
+يُرجى العلم بأن الدورة التدريبية "${course.name}"${dtSuffix} قد تم تفعيلها.
 
 المواد مطبوعة وجاهزة للنقل. يُرجى التنسيق للتسليم في أقرب وقت ممكن.
 
@@ -426,7 +439,7 @@ function triggersFor(course) {
       message:
 `مرحباً،
 
-طلب استوديو لدورة: "${course.name}"${course.date ? ' (' + fmtDate(course.date) + ')' : ''}.
+طلب استوديو لدورة: "${course.name}"${dtSuffix}.
 
 متطلبات المحاضر:
 ${studioReqs || '(يُرجى تحديث المتطلبات أولاً)'}
@@ -452,7 +465,7 @@ ${studioReqs || '(يُرجى تحديث المتطلبات أولاً)'}
       message:
 `مرحباً،
 
-تنبيه: سيكون التصوير مطلوباً في اليوم الأخير من الدورة "${course.name}"${course.date ? ' (' + fmtDate(course.date) + ')' : ''}.
+تنبيه: سيكون التصوير مطلوباً في اليوم الأخير من الدورة "${course.name}"${dtSuffix}.
 
 يُرجى التأكد من جاهزيتك ومعداتك.
 
@@ -475,12 +488,44 @@ ${studioReqs || '(يُرجى تحديث المتطلبات أولاً)'}
       message:
 `مرحباً،
 
-يُرجى تجهيز وثائق القاعة للدورة التدريبية "${course.name}"${course.date ? ' (' + fmtDate(course.date) + ')' : ''}.
+يُرجى تجهيز وثائق القاعة للدورة التدريبية "${course.name}"${dtSuffix}.
 
 يُرجى التأكد من اكتمال جميع الإجراءات.
 
 شكراً،
 معهد الجزيرة للإعلام`
+    });
+  }
+
+  if (type === 'inside' && tasks.eveningCafeteria && !sentNotifs.cafeteria) {
+    const startAr  = course.date    ? `يوم ${fmtDateArDay(course.date)}`    : '';
+    const endAr    = course.dateEnd ? `يوم ${fmtDateArDay(course.dateEnd)}` : (course.date ? `يوم ${fmtDateArDay(course.date)}` : '');
+    const endTimeAr = course.timeEnd ? `الساعة ${fmtTimeAr(course.timeEnd)}` : 'الساعة 9:00 مساءً';
+    const dateRange = (startAr && endAr && startAr !== endAr)
+      ? `ابتداءً من ${startAr} وحتى ${endAr}`
+      : (startAr || endAr);
+    out.push({
+      id: 'cafeteria',
+      icon: '☕',
+      title: 'Evening Cafeteria — Keep Open',
+      desc: 'Notify cafeteria to stay open for evening course',
+      recipient: 'Cafeteria — +974 50843134 & +974 55055512',
+      phones: ['97450843134', '97455055512'],
+      color: '#FB923C',
+      bg: '#1a0e00',
+      border: '#3a1f00',
+      message:
+`السلام عليكم ورحمة الله وبركاته،
+
+تحية طيبة وبعد،،،
+
+نود إفادتكم بوجود دورة مسائية بعنوان "${course.name}". نرجو التكرم بإبقاء الكافتيريا مفتوحة طوال مدة الدورة.
+
+وذلك ${dateRange} ، حتى ${endTimeAr}.
+
+شاكرين تعاونكم وتفهمكم.
+
+مع خالص التحية،`
     });
   }
 
@@ -490,16 +535,16 @@ ${studioReqs || '(يُرجى تحديث المتطلبات أولاً)'}
 /* ──────────────────────────────────────────────
    COURSE CRUD
 ────────────────────────────────────────────── */
-function newCourse(name, type, date, timeStart, timeEnd) {
+function newCourse(name, type, date, dateEnd, timeStart, timeEnd) {
   const tasks = {};
   tasksFor(type).forEach(t => { tasks[t.id] = null; });
   return {
     id: Date.now().toString(36) + Math.random().toString(36).slice(2),
-    name, type, date, timeStart, timeEnd,
+    name, type, date, dateEnd, timeStart, timeEnd,
     status: type === 'outside' ? 'pending' : 'draft',
     tasks,
     studioReqs: '',
-    sentNotifs: { certReady:false, logistics:false, studio:false, photography:false, auditorium:false },
+    sentNotifs: { certReady:false, logistics:false, studio:false, photography:false, auditorium:false, cafeteria:false },
     createdAt: new Date().toISOString(),
   };
 }
@@ -512,6 +557,22 @@ function fmtDate(d) {
   return new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
 }
 
+function fmtDateRange(start, end) {
+  if (!start && !end) return '';
+  if (start && end && start !== end) return `${fmtDate(start)} – ${fmtDate(end)}`;
+  return fmtDate(start || end);
+}
+
+function fmtDateArDay(d) {
+  if (!d) return '';
+  const date = new Date(d + 'T00:00:00');
+  const dayName = date.toLocaleDateString('ar-QA', { weekday: 'long' });
+  const day   = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year  = date.getFullYear();
+  return `${dayName} الموافق ${day}/${month}/${year}`;
+}
+
 function fmtTime(t) {
   if (!t) return '';
   const [h, m] = t.split(':');
@@ -519,10 +580,25 @@ function fmtTime(t) {
   return `${hour % 12 || 12}:${m} ${hour < 12 ? 'AM' : 'PM'}`;
 }
 
+function fmtTimeAr(t) {
+  if (!t) return '';
+  const [h, m] = t.split(':');
+  const hour = parseInt(h);
+  const period = hour < 12 ? 'صباحاً' : 'مساءً';
+  return `${hour % 12 || 12}:${m} ${period}`;
+}
+
 function fmtTimeRange(start, end) {
   if (!start && !end) return '';
   if (start && end) return `${fmtTime(start)} – ${fmtTime(end)}`;
   return fmtTime(start || end);
+}
+
+function courseDateTimeLine(course) {
+  const dr = fmtDateRange(course.date, course.dateEnd);
+  const tr = fmtTimeRange(course.timeStart, course.timeEnd);
+  if (dr && tr) return `${dr} · ${tr}`;
+  return dr || tr || '';
 }
 
 const TYPE_LABEL   = { inside:'Inside', outside:'Outside', online:'Online' };
@@ -573,7 +649,7 @@ function renderSidebar() {
             <div class="flex items-center gap-1 mt-1 text-xs" style="color:#555;">
               <span>${TYPE_ICON[c.type]}</span>
               <span>${TYPE_LABEL[c.type]}</span>
-              ${c.date ? `<span style="color:#333;">·</span><span>${fmtDate(c.date)}</span>` : ''}
+              ${(c.date || c.dateEnd) ? `<span style="color:#333;">·</span><span>${fmtDateRange(c.date, c.dateEnd)}</span>` : ''}
               ${fmtTimeRange(c.timeStart, c.timeEnd) ? `<span style="color:#333;">·</span><span style="color:#C8931F;">${fmtTimeRange(c.timeStart, c.timeEnd)}</span>` : ''}
             </div>
           </div>
@@ -655,7 +731,7 @@ function renderDetail() {
         <h1 class="text-xl font-bold mt-2 leading-tight" style="color:#fff;">${course.name}</h1>
         <div class="flex items-center gap-3 mt-1 text-sm flex-wrap" style="color:#666;">
           <span>${TYPE_LABEL[course.type]}</span>
-          ${course.date ? `<span>·</span><span>${fmtDate(course.date)}</span>` : ''}
+          ${(course.date || course.dateEnd) ? `<span>·</span><span>${fmtDateRange(course.date, course.dateEnd)}</span>` : ''}
           ${fmtTimeRange(course.timeStart, course.timeEnd) ? `<span>·</span><span style="color:#C8931F;">${fmtTimeRange(course.timeStart, course.timeEnd)}</span>` : ''}
         </div>
       </div>
@@ -743,7 +819,7 @@ function renderDetail() {
   if (sent.length) {
     const sentLabels = { certReady:'Certificates collection notified', logistics:'Logistics notified',
                          studio:'Studio request sent', photography:'Photographer notified',
-                         auditorium:'Auditorium notified' };
+                         auditorium:'Auditorium notified', cafeteria:'Cafeteria notified' };
     html += `
     <div class="mb-5">
       <div class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:#555;">✅ Sent Notifications</div>
@@ -910,6 +986,7 @@ function openAddModal() {
   document.getElementById('modal-title').textContent = 'New Course';
   document.getElementById('m-name').value = '';
   document.getElementById('m-date').value = '';
+  document.getElementById('m-date-end').value = '';
   document.getElementById('m-time-start').value = '';
   document.getElementById('m-time-end').value = '';
   updateModalTypeUI(null);
@@ -925,6 +1002,7 @@ function openEditModal(id) {
   document.getElementById('modal-title').textContent = 'Edit Course';
   document.getElementById('m-name').value = c.name;
   document.getElementById('m-date').value = c.date||'';
+  document.getElementById('m-date-end').value = c.dateEnd||'';
   document.getElementById('m-time-start').value = c.timeStart||'';
   document.getElementById('m-time-end').value = c.timeEnd||'';
   updateModalTypeUI(c.type);
@@ -946,6 +1024,7 @@ function updateModalTypeUI(t) {
 function saveCourse() {
   const name      = document.getElementById('m-name').value.trim();
   const date      = document.getElementById('m-date').value;
+  const dateEnd   = document.getElementById('m-date-end').value;
   const timeStart = document.getElementById('m-time-start').value;
   const timeEnd   = document.getElementById('m-time-end').value;
   const type = db.modalType;
@@ -958,6 +1037,7 @@ function saveCourse() {
     const prevType = c.type;
     c.name = name;
     c.date = date;
+    c.dateEnd = dateEnd;
     c.timeStart = timeStart;
     c.timeEnd   = timeEnd;
     if (prevType !== type) {
@@ -970,7 +1050,7 @@ function saveCourse() {
     }
     showToast('Course updated','✏️');
   } else {
-    const c = newCourse(name, type, date, timeStart, timeEnd);
+    const c = newCourse(name, type, date, dateEnd, timeStart, timeEnd);
     db.courses.push(c);
     db.selectedId = c.id;
     showToast('Course created','✅');
@@ -1019,12 +1099,15 @@ function approveAndSend() {
   const t   = triggersFor(c).find(x => x.id===triggerId);
   if (!t) return;
 
-  window.open(`https://wa.me/${t.phone}?text=${encodeURIComponent(msg)}`, '_blank');
+  const phones = t.phones || [t.phone];
+  phones.forEach((ph, i) => {
+    setTimeout(() => window.open(`https://wa.me/${ph}?text=${encodeURIComponent(msg)}`, '_blank'), i * 400);
+  });
   c.sentNotifs[triggerId] = true;
   persist();
   closeNotifModal();
   render();
-  showToast('WhatsApp opened — message ready to send','📤');
+  showToast(phones.length > 1 ? `WhatsApp opened for ${phones.length} recipients` : 'WhatsApp opened — message ready to send','📤');
 }
 
 function resendNotif(courseId, triggerId) {
