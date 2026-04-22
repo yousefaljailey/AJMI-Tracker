@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AJMI — Course Tracking System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: #111111; }
+
+    /* ── Scrollbars ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #C8931F; }
+
+    /* ── Sidebar course items ── */
+    .c-item { transition: background 0.12s ease; border-bottom: 1px solid #1e1e1e; }
+    .c-item:hover { background: #161616; }
+    .c-item.selected { background: #1a1400; box-shadow: inset 3px 0 0 #C8931F; }
+
+    /* ── Yes / No toggles ── */
+    .yn-yes { background: #0d1f0d; color: #4ade80; border: 1.5px solid #166534; }
+    .yn-yes.active { background: #16A34A; color: #fff; border-color: #16A34A; box-shadow: 0 2px 10px #16a34a50; }
+    .yn-no  { background: #1f0d0d; color: #f87171; border: 1.5px solid #7f1d1d; }
+    .yn-no.active  { background: #DC2626; color: #fff; border-color: #DC2626; box-shadow: 0 2px 10px #dc262650; }
+
+    /* ── Status badges (sidebar) ── */
+    .s-draft     { background:#252525; color:#888; }
+    .s-pending   { background:#241a00; color:#F59E0B; }
+    .s-active    { background:#0a1f0a; color:#4ADE80; }
+    .s-completed { background:#07112a; color:#60A5FA; }
+
+    /* ── Status change pills ── */
+    .sp-btn { border: 1px solid #333; color: #777; transition: all .12s ease; }
+    .sp-btn:hover { border-color: #C8931F; color: #C8931F; }
+    .sp-btn.sp-active-draft     { background:#333; color:#ccc; border-color:#333; }
+    .sp-btn.sp-active-pending   { background:#C8931F; color:#000; border-color:#C8931F; box-shadow:0 2px 10px #C8931F50; }
+    .sp-btn.sp-active-active    { background:#16A34A; color:#fff; border-color:#16A34A; box-shadow:0 2px 10px #16a34a50; }
+    .sp-btn.sp-active-completed { background:#2563EB; color:#fff; border-color:#2563EB; box-shadow:0 2px 10px #2563eb50; }
+
+    /* ── Type buttons in modal ── */
+    .type-btn { border: 1px solid #333; color: #888; transition: all .12s ease; cursor: pointer; background: #1a1a1a; }
+    .type-btn:hover { border-color: #C8931F; color: #C8931F; }
+    .type-btn.selected { background: #C8931F; color: #000; border-color: #C8931F; font-weight: 600; }
+
+    /* ── Modal animation ── */
+    .modal-box { animation: pop-in .18s cubic-bezier(.34,1.56,.64,1) both; }
+    @keyframes pop-in {
+      from { opacity:0; transform: scale(.93) translateY(-10px); }
+      to   { opacity:1; transform: scale(1)   translateY(0); }
+    }
+
+    /* ── Trigger cards ── */
+    .trigger-card { transition: opacity .15s ease; }
+    .trigger-card:hover { opacity: .9; }
+
+    /* ── Pulse ── */
+    @keyframes pulse-ring { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .pulse { animation: pulse-ring 2s ease-in-out infinite; }
+
+    /* ── Progress bar ── */
+    .progress-fill { transition: width .4s cubic-bezier(.25,.46,.45,.94); }
+
+    /* ── Toast ── */
+    #toast { transition: opacity .25s ease, transform .25s ease; }
+
+    /* ── Search input — gold accent like AJMI site ── */
+    .gold-search { background: #C8931F; color: #000; }
+    .gold-search::placeholder { color: #4a3000; }
+    .gold-search:focus { outline: none; background: #E5A830; }
+
+    /* ── Dark input ── */
+    .dark-input { background: #1a1a1a; border: 1px solid #333; color: #fff; }
+    .dark-input::placeholder { color: #555; }
+    .dark-input:focus { outline: none; border-color: #C8931F; box-shadow: 0 0 0 2px #C8931F20; }
+
+    /* ── Dark select ── */
+    .dark-select { background: #1a1a1a; border: 1px solid #333; color: #888; }
+    .dark-select:focus { outline: none; border-color: #C8931F; }
+
+    /* ── Card ── */
+    .dark-card { background: #1a1a1a; border: 1px solid #2a2a2a; }
+
+    /* ── Section header ── */
+    .dark-section-hd { background: #1e1e1e; border-bottom: 1px solid #2a2a2a; }
+
+    /* ── Divider ── */
+    .dark-divider { border-bottom: 1px solid #222; }
+  </style>
+</head>
+<body class="h-screen overflow-hidden select-none" style="background:#111111;">
+
+<!-- ═══════════════════ APP SHELL ═══════════════════ -->
+<div class="flex h-screen">
+
+  <!-- ══════════════ SIDEBAR ══════════════ -->
+  <aside style="background:#000; width:260px; min-width:260px;" class="flex flex-col overflow-hidden border-r" style2="border-color:#1e1e1e;">
+
+    <!-- Logo block — mirrors institute.aljazeera.net -->
+    <div class="flex flex-col items-center py-5 px-4" style="border-bottom:1px solid #1e1e1e;">
+      <img src="ajmi-logo.svg" alt="Al Jazeera Media Institute" class="h-20 w-auto mb-1">
+      <div id="sidebar-stats" class="text-xs mt-2 text-center" style="color:#555;"></div>
+    </div>
+
+    <!-- Gold search — exact style from AJMI site -->
+    <div class="px-3 pt-3 pb-2" style="border-bottom:1px solid #1e1e1e;">
+      <input id="s-search" type="text" placeholder="looking for?"
+             oninput="render()"
+             class="gold-search w-full px-3 py-2 text-xs font-medium rounded">
+      <div class="flex gap-1.5 mt-2">
+        <select id="s-type" onchange="render()" class="dark-select flex-1 text-xs px-2 py-1.5 rounded">
+          <option value="">All Types</option>
+          <option value="inside">Inside</option>
+          <option value="outside">Outside</option>
+          <option value="online">Online</option>
+        </select>
+        <select id="s-status" onchange="render()" class="dark-select flex-1 text-xs px-2 py-1.5 rounded">
+          <option value="">All Status</option>
+          <option value="draft">Draft</option>
+          <option value="pending">Pending</option>
+          <option value="active">Active</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- New Course button -->
+    <div class="px-3 py-2.5" style="border-bottom:1px solid #1e1e1e;">
+      <button onclick="openAddModal()"
+              class="w-full flex items-center justify-center gap-2 py-2.5 rounded text-xs font-bold tracking-wide transition-all hover:brightness-110 active:scale-95"
+              style="background:#C8931F; color:#000;">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+        </svg>
+        NEW COURSE
+      </button>
+    </div>
+
+    <!-- Course list -->
+    <div id="sidebar-list" class="flex-1 overflow-y-auto"></div>
+  </aside>
+
+  <!-- ══════════════ MAIN CONTENT ══════════════ -->
+  <main class="flex-1 overflow-y-auto" style="background:#111111;">
+
+    <!-- Empty state -->
+    <div id="empty-state" class="h-full flex flex-col items-center justify-center text-center px-6">
+      <img src="ajmi-logo.svg" alt="" class="h-24 w-auto mb-6 opacity-20">
+      <p class="text-sm leading-relaxed" style="color:#555;">
+        Select a course to view its checklist,<br>or click <strong style="color:#C8931F;">New Course</strong> to get started.
+      </p>
+    </div>
+
+    <!-- Detail panel -->
+    <div id="detail-panel" class="hidden p-6" style="max-width:760px; margin:0 auto;"></div>
+  </main>
+
+</div>
+
+<!-- ═══════════════════ ADD / EDIT MODAL ═══════════════════ -->
+<div id="course-modal"
+     class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
+     style="background:rgba(0,0,0,.75); backdrop-filter:blur(6px);">
+  <div class="modal-box rounded-xl shadow-2xl w-full max-w-md" style="background:#1a1a1a; border:1px solid #333;">
+    <!-- Header -->
+    <div class="px-5 pt-5 pb-4 flex items-center justify-between" style="border-bottom:1px solid #2a2a2a;">
+      <h2 id="modal-title" class="text-base font-semibold text-white">New Course</h2>
+      <button onclick="closeModal()" class="transition-colors" style="color:#555;" onmouseover="this.style.color='#C8931F'" onmouseout="this.style.color='#555'">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <!-- Body -->
+    <div class="px-5 py-5 space-y-5">
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-widest mb-2" style="color:#666;">
+          Course Name <span style="color:#DC2626;" class="normal-case font-normal">*</span>
+        </label>
+        <input id="m-name" type="text" placeholder="e.g., Advanced TV Production"
+               class="dark-input w-full px-3 py-2.5 rounded-lg text-sm">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-widest mb-2" style="color:#666;">
+          Course Date
+        </label>
+        <input id="m-date" type="date"
+               class="dark-input w-full px-3 py-2.5 rounded-lg text-sm">
+      </div>
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-widest mb-2" style="color:#666;">
+          Time
+        </label>
+        <div class="flex items-center gap-2">
+          <div class="flex-1">
+            <div class="text-xs mb-1" style="color:#555;">Start</div>
+            <input id="m-time-start" type="time"
+                   class="dark-input w-full px-3 py-2.5 rounded-lg text-sm">
+          </div>
+          <div class="pt-4" style="color:#444;">→</div>
+          <div class="flex-1">
+            <div class="text-xs mb-1" style="color:#555;">End</div>
+            <input id="m-time-end" type="time"
+                   class="dark-input w-full px-3 py-2.5 rounded-lg text-sm">
+          </div>
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-widest mb-2" style="color:#666;">
+          Type <span style="color:#DC2626;" class="normal-case font-normal">*</span>
+        </label>
+        <div class="grid grid-cols-3 gap-2">
+          <button onclick="selectModalType('inside')"  id="mt-inside"  class="type-btn py-3 rounded-lg text-sm font-medium">🏛️ Inside</button>
+          <button onclick="selectModalType('outside')" id="mt-outside" class="type-btn py-3 rounded-lg text-sm font-medium">🌍 Outside</button>
+          <button onclick="selectModalType('online')"  id="mt-online"  class="type-btn py-3 rounded-lg text-sm font-medium">💻 Online</button>
+        </div>
+        <p id="mt-outside-note" class="hidden mt-2 text-xs rounded-lg px-3 py-2"
+           style="background:#241a00; color:#F59E0B; border:1px solid #3a2900;">
+          ⚠️ Status will automatically be set to <strong>Pending</strong> for Outside courses.
+        </p>
+      </div>
+    </div>
+    <!-- Footer -->
+    <div class="px-5 pb-5 flex gap-3">
+      <button onclick="closeModal()"
+              class="flex-1 py-2.5 rounded-lg text-sm font-medium transition-colors"
+              style="border:1px solid #333; color:#888; background:transparent;"
+              onmouseover="this.style.borderColor='#555'" onmouseout="this.style.borderColor='#333'">
+        Cancel
+      </button>
+      <button onclick="saveCourse()"
+              class="flex-1 py-2.5 rounded-lg text-sm font-bold transition-all hover:brightness-110 active:scale-95"
+              style="background:#C8931F; color:#000;">
+        Save Course
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ APPROVAL MODAL ═══════════════════ -->
+<div id="notif-modal"
+     class="hidden fixed inset-0 z-50 flex items-center justify-center p-4"
+     style="background:rgba(0,0,0,.8); backdrop-filter:blur(6px);">
+  <div class="modal-box rounded-xl shadow-2xl w-full max-w-lg" style="background:#1a1a1a; border:1px solid #333;">
+    <!-- Header -->
+    <div class="px-5 pt-5 pb-4 flex items-start gap-3" style="border-bottom:1px solid #2a2a2a;">
+      <div id="nm-icon"
+           class="w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-none"
+           style="background:#252525;"></div>
+      <div class="flex-1">
+        <h2 class="text-base font-semibold text-white">Approve Message</h2>
+        <p class="text-xs mt-0.5" style="color:#666;">Review carefully — this will open WhatsApp to send</p>
+      </div>
+      <button onclick="closeNotifModal()" style="color:#555;" onmouseover="this.style.color='#C8931F'" onmouseout="this.style.color='#555'" class="mt-0.5">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <!-- Body -->
+    <div class="px-5 py-5 space-y-4">
+      <div class="rounded-lg p-3.5" style="background:#111; border:1px solid #2a2a2a;">
+        <div class="text-xs font-semibold uppercase tracking-widest mb-1" style="color:#555;">Recipient</div>
+        <div id="nm-recipient" class="text-sm font-semibold" style="color:#C8931F;"></div>
+      </div>
+      <div>
+        <div class="text-xs font-semibold uppercase tracking-widest mb-2" style="color:#555;">Message</div>
+        <textarea id="nm-message" rows="7"
+                  class="dark-input w-full px-3.5 py-3 rounded-lg text-sm resize-none leading-relaxed"></textarea>
+      </div>
+      <div class="flex items-start gap-2.5 rounded-lg px-4 py-3"
+           style="background:#241a00; border:1px solid #3a2900;">
+        <span style="color:#F59E0B;" class="text-base mt-0.5">⚠️</span>
+        <p class="text-xs leading-relaxed" style="color:#D97706;">
+          This is an official message from <strong style="color:#F59E0B;">Al Jazeera Media Institute</strong>.
+          Please verify the content before sending.
+        </p>
+      </div>
+    </div>
+    <!-- Footer -->
+    <div class="px-5 pb-5 flex gap-3">
+      <button onclick="closeNotifModal()"
+              class="flex-1 py-2.5 rounded-lg text-sm font-medium"
+              style="border:1px solid #333; color:#888; background:transparent;">
+        Cancel
+      </button>
+      <button onclick="approveAndSend()"
+              class="flex-1 py-2.5 rounded-lg text-sm font-bold text-white transition-all hover:brightness-110 active:scale-95 flex items-center justify-center gap-2"
+              style="background:#16A34A; box-shadow:0 4px 14px #16a34a40;">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+          <path d="M12 0C5.373 0 0 5.373 0 12c0 2.125.558 4.122 1.534 5.858L.057 23.854a.5.5 0 00.608.608l6.016-1.477A11.955 11.955 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.96 0-3.794-.567-5.337-1.541l-.376-.228-3.898.957.974-3.879-.245-.388A9.956 9.956 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/>
+        </svg>
+        Approve &amp; Send via WhatsApp
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ TOAST ═══════════════════ -->
+<div id="toast"
+     class="fixed bottom-6 right-6 z-50 opacity-0 pointer-events-none
+            flex items-center gap-3 text-sm px-4 py-3 rounded-lg shadow-2xl"
+     style="background:#1a1a1a; color:#fff; border:1px solid #333; transform:translateY(8px);">
+  <span id="toast-icon"></span>
+  <span id="toast-msg"></span>
+</div>
+
+<!-- ═══════════════════ JAVASCRIPT ═══════════════════ -->
+<script>
+/* ──────────────────────────────────────────────
+   STATE
+────────────────────────────────────────────── */
+const STORE_KEY = 'ajmi_courses_v2';
+
+let db = {
+  courses: JSON.parse(localStorage.getItem(STORE_KEY) || '[]'),
+  selectedId: null,
+  editingId: null,
+  modalType: null,
+  pendingNotif: null
+};
+
+function persist() {
+  localStorage.setItem(STORE_KEY, JSON.stringify(db.courses));
+}
+
+function byId(id) {
+  return db.courses.find(c => c.id === id);
+}
+
+/* ──────────────────────────────────────────────
+   TASK DEFINITIONS
+────────────────────────────────────────────── */
+function tasksFor(type) {
+  if (type === 'online') {
+    return [
+      { id:'sendCertificates',  label:'Send Certificates',          section:'Certificates', isReminder:true },
+      { id:'studentEval',       label:'Student Evaluation Completed',section:'Evaluations'                   },
+      { id:'teacherEval',       label:'Teacher Evaluation Completed',section:'Evaluations'                   },
+      { id:'finalCheck',        label:'Attendance sheets & certificates saved in folder', section:'Final Check' },
+    ];
+  }
+  const base = [
+    { id:'prepareCerts',      label:'Prepare Certificates',        section:'Certificates' },
+  ];
+  const inside = type === 'inside' ? [
+    { id:'printNameSheet',    label:'Print Name Sheet',             section:'Inside Preparation' },
+    { id:'attendanceSheet',   label:'Attendance Sheet',             section:'Inside Preparation' },
+    { id:'sendEmailPax',      label:'Send Email to Participants',   section:'Inside Preparation' },
+    { id:'contactTeacher',    label:'Contact Course Teacher',       section:'Inside Preparation' },
+    { id:'auditorium',        label:'Auditorium',                   section:'Facilities', hasTrigger:true },
+    { id:'eveningCafeteria',  label:'Evening Cafeteria',            section:'Facilities' },
+  ] : [];
+  const ops = type === 'inside' ? [
+    { id:'studioNeeded',      label:'Studio Needed',                section:'Operations', hasTrigger:true, hasInput:true },
+    { id:'photographyNeeded', label:'Photography Needed',           section:'Operations', hasTrigger:true },
+  ] : [];
+  const checks = [
+    { id:'studentEval',       label:'Student Evaluation Completed', section:'Evaluations' },
+    { id:'teacherEval',       label:'Teacher Evaluation Completed', section:'Evaluations' },
+    { id:'finalCheck',        label:'Attendance sheets & certificates saved in folder', section:'Final Check' },
+  ];
+  return [...base, ...inside, ...ops, ...checks];
+}
+
+/* ──────────────────────────────────────────────
+   TRIGGER DEFINITIONS
+────────────────────────────────────────────── */
+function triggersFor(course) {
+  const { type, status, tasks, sentNotifs, studioReqs } = course;
+  const out = [];
+
+  if (type === 'outside' && tasks.prepareCerts && !sentNotifs.certReady) {
+    out.push({
+      id: 'certReady',
+      icon: '📜',
+      title: 'Certificates Ready for Collection',
+      desc: 'Notify logistics that certificates are ready',
+      recipient: 'Logistics Employee — +974 55259705',
+      phone: '97455259705',
+      color: '#C8931F',
+      bg: '#1a1200',
+      border: '#3a2900',
+      message: `The certificates are ready to be collected from my office.`,
+    });
+  }
+
+  if (type === 'outside' && status === 'active' && !sentNotifs.logistics) {
+    out.push({
+      id: 'logistics',
+      icon: '🚚',
+      title: 'Notify Logistics Team',
+      desc: 'Materials printed & ready for transport',
+      recipient: 'Logistics Employee — +974 55259705',
+      phone: '97455259705',
+      color: '#38BDF8',
+      bg: '#071620',
+      border: '#0c2a3a',
+      message:
+`مرحباً،
+
+يُرجى العلم بأن الدورة التدريبية "${course.name}"${course.date ? ' بتاريخ ' + fmtDate(course.date) : ''} قد تم تفعيلها.
+
+المواد مطبوعة وجاهزة للنقل. يُرجى التنسيق للتسليم في أقرب وقت ممكن.
+
+شكراً،
+معهد الجزيرة للإعلام`
+    });
+  }
+
+  if (tasks.studioNeeded && !sentNotifs.studio) {
+    out.push({
+      id: 'studio',
+      icon: '🎬',
+      title: 'Studio Request — Operations Team',
+      desc: 'Send teacher requirements to operations',
+      recipient: 'Operations Team — +974 55556833',
+      phone: '97455556833',
+      color: '#A78BFA',
+      bg: '#130d20',
+      border: '#2a1a40',
+      message:
+`مرحباً،
+
+طلب استوديو لدورة: "${course.name}"${course.date ? ' (' + fmtDate(course.date) + ')' : ''}.
+
+متطلبات المحاضر:
+${studioReqs || '(يُرجى تحديث المتطلبات أولاً)'}
+
+يُرجى الاستعداد وفقاً لذلك.
+
+شكراً،
+معهد الجزيرة للإعلام`
+    });
+  }
+
+  if (tasks.photographyNeeded && status === 'active' && !sentNotifs.photography) {
+    out.push({
+      id: 'photography',
+      icon: '📸',
+      title: 'Notify Photographer',
+      desc: 'Photography required on last day of course',
+      recipient: 'Photographer — +974 55706155',
+      phone: '97455706155',
+      color: '#FBBF24',
+      bg: '#1a1200',
+      border: '#3a2800',
+      message:
+`مرحباً،
+
+تنبيه: سيكون التصوير مطلوباً في اليوم الأخير من الدورة "${course.name}"${course.date ? ' (' + fmtDate(course.date) + ')' : ''}.
+
+يُرجى التأكد من جاهزيتك ومعداتك.
+
+شكراً،
+معهد الجزيرة للإعلام`
+    });
+  }
+
+  if (type === 'inside' && tasks.auditorium && status === 'active' && !sentNotifs.auditorium) {
+    out.push({
+      id: 'auditorium',
+      icon: '🎭',
+      title: 'Auditorium — Prepare Documents',
+      desc: 'Notify responsible person to prepare',
+      recipient: 'Auditorium Responsible — +974 33533725',
+      phone: '97433533725',
+      color: '#34D399',
+      bg: '#071a10',
+      border: '#0d3020',
+      message:
+`مرحباً،
+
+يُرجى تجهيز وثائق القاعة للدورة التدريبية "${course.name}"${course.date ? ' (' + fmtDate(course.date) + ')' : ''}.
+
+يُرجى التأكد من اكتمال جميع الإجراءات.
+
+شكراً،
+معهد الجزيرة للإعلام`
+    });
+  }
+
+  return out;
+}
+
+/* ──────────────────────────────────────────────
+   COURSE CRUD
+────────────────────────────────────────────── */
+function newCourse(name, type, date, timeStart, timeEnd) {
+  const tasks = {};
+  tasksFor(type).forEach(t => { tasks[t.id] = null; });
+  return {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2),
+    name, type, date, timeStart, timeEnd,
+    status: type === 'outside' ? 'pending' : 'draft',
+    tasks,
+    studioReqs: '',
+    sentNotifs: { certReady:false, logistics:false, studio:false, photography:false, auditorium:false },
+    createdAt: new Date().toISOString(),
+  };
+}
+
+/* ──────────────────────────────────────────────
+   RENDER UTILITIES
+────────────────────────────────────────────── */
+function fmtDate(d) {
+  if (!d) return '';
+  return new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+function fmtTime(t) {
+  if (!t) return '';
+  const [h, m] = t.split(':');
+  const hour = parseInt(h);
+  return `${hour % 12 || 12}:${m} ${hour < 12 ? 'AM' : 'PM'}`;
+}
+
+function fmtTimeRange(start, end) {
+  if (!start && !end) return '';
+  if (start && end) return `${fmtTime(start)} – ${fmtTime(end)}`;
+  return fmtTime(start || end);
+}
+
+const TYPE_LABEL   = { inside:'Inside', outside:'Outside', online:'Online' };
+const TYPE_ICON    = { inside:'🏛️', outside:'🌍', online:'💻' };
+const STATUS_LABEL = { draft:'Draft', pending:'Pending', active:'Active', completed:'Completed' };
+
+function progressOf(course) {
+  const tasks = tasksFor(course.type);
+  const yes   = tasks.filter(t => course.tasks[t.id] === true).length;
+  return { done:yes, total:tasks.length, pct: tasks.length ? Math.round(yes/tasks.length*100) : 0 };
+}
+
+/* ──────────────────────────────────────────────
+   RENDER: SIDEBAR
+────────────────────────────────────────────── */
+function renderSidebar() {
+  const search  = (document.getElementById('s-search').value || '').toLowerCase();
+  const fType   = document.getElementById('s-type').value;
+  const fStatus = document.getElementById('s-status').value;
+
+  const list = db.courses.filter(c => {
+    if (search  && !c.name.toLowerCase().includes(search)) return false;
+    if (fType   && c.type   !== fType)   return false;
+    if (fStatus && c.status !== fStatus) return false;
+    return true;
+  });
+
+  const el = document.getElementById('sidebar-list');
+
+  if (!list.length) {
+    el.innerHTML = `<div style="color:#444;" class="py-12 text-center text-xs">
+      <div class="text-2xl mb-2">📋</div>
+      <div>${db.courses.length ? 'No matches' : 'No courses yet'}</div>
+    </div>`;
+  } else {
+    el.innerHTML = list.map(c => {
+      const { done, total, pct } = progressOf(c);
+      const trigs = triggersFor(c);
+      const isSel = c.id === db.selectedId;
+      const sClass = `s-${c.status}`;
+      const barColor = pct===100 ? '#16A34A' : '#C8931F';
+      return `
+      <div onclick="selectCourse('${c.id}')"
+           class="c-item ${isSel?'selected':''} px-3 py-3 cursor-pointer">
+        <div class="flex items-start gap-2">
+          <div class="flex-1 min-w-0">
+            <div class="font-semibold text-xs truncate leading-tight" style="color:${isSel?'#E5A830':'#ddd'}">${c.name}</div>
+            <div class="flex items-center gap-1 mt-1 text-xs" style="color:#555;">
+              <span>${TYPE_ICON[c.type]}</span>
+              <span>${TYPE_LABEL[c.type]}</span>
+              ${c.date ? `<span style="color:#333;">·</span><span>${fmtDate(c.date)}</span>` : ''}
+              ${fmtTimeRange(c.timeStart, c.timeEnd) ? `<span style="color:#333;">·</span><span style="color:#C8931F;">${fmtTimeRange(c.timeStart, c.timeEnd)}</span>` : ''}
+            </div>
+          </div>
+          <div class="flex flex-col items-end gap-1 flex-none">
+            <span class="text-xs px-1.5 py-0.5 rounded font-medium ${sClass}">${STATUS_LABEL[c.status]}</span>
+            ${trigs.length ? `<span class="pulse text-xs px-1.5 py-0.5 rounded font-semibold" style="background:#2a1800;color:#F59E0B;">⚡ ${trigs.length}</span>` : ''}
+          </div>
+        </div>
+        <div class="mt-2">
+          <div class="flex justify-between text-xs mb-1" style="color:#444;">
+            <span>${done}/${total} tasks</span>
+            <span style="color:${barColor}; font-weight:600;">${pct}%</span>
+          </div>
+          <div class="h-0.5 rounded-full overflow-hidden" style="background:#222;">
+            <div class="progress-fill h-full rounded-full" style="width:${pct}%; background:${barColor};"></div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Stats in sidebar logo area
+  const counts = { active:0, pending:0, total: db.courses.length };
+  db.courses.forEach(c => { if (c.status==='active') counts.active++; if (c.status==='pending') counts.pending++; });
+  const stats = document.getElementById('sidebar-stats');
+  if (counts.total) {
+    stats.innerHTML = `<span style="color:#555;">${counts.total} course${counts.total!==1?'s':''}</span>`
+      + (counts.active ? `&nbsp;&nbsp;<span style="color:#4ADE80;">● ${counts.active} active</span>` : '')
+      + (counts.pending ? `&nbsp;&nbsp;<span style="color:#F59E0B;">● ${counts.pending} pending</span>` : '');
+  } else {
+    stats.innerHTML = '';
+  }
+}
+
+/* ──────────────────────────────────────────────
+   RENDER: DETAIL
+────────────────────────────────────────────── */
+function renderDetail() {
+  const course = byId(db.selectedId);
+  const empty  = document.getElementById('empty-state');
+  const panel  = document.getElementById('detail-panel');
+
+  if (!course) {
+    empty.classList.remove('hidden');
+    panel.classList.add('hidden');
+    return;
+  }
+
+  empty.classList.add('hidden');
+  panel.classList.remove('hidden');
+
+  const { done, total, pct } = progressOf(course);
+  const trigs    = triggersFor(course);
+  const taskDefs = tasksFor(course.type);
+
+  const sections = {};
+  taskDefs.forEach(t => { (sections[t.section] = sections[t.section] || []).push(t); });
+
+  const sColors = { draft:'#888', pending:'#F59E0B', active:'#4ADE80', completed:'#60A5FA' };
+  const sBg     = { draft:'#252525', pending:'#241a00', active:'#0a1f0a', completed:'#07112a' };
+  const barColor = pct===100 ? '#16A34A' : '#C8931F';
+
+  /* ── Course header card ── */
+  let html = `
+  <div class="rounded-xl p-5 mb-5" style="background:#1a1a1a; border:1px solid #2a2a2a;">
+    <div class="flex items-start justify-between gap-3">
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="text-2xl">${TYPE_ICON[course.type]}</span>
+          <span class="text-xs font-semibold px-2.5 py-1 rounded-full"
+                style="background:${sBg[course.status]}; color:${sColors[course.status]};">
+            ${STATUS_LABEL[course.status]}
+          </span>
+          ${trigs.length ? `<span class="text-xs font-semibold px-2.5 py-1 rounded-full pulse"
+            style="background:#2a1800; color:#F59E0B;">
+            ⚡ ${trigs.length} action${trigs.length>1?'s':''} pending
+          </span>` : ''}
+        </div>
+        <h1 class="text-xl font-bold mt-2 leading-tight" style="color:#fff;">${course.name}</h1>
+        <div class="flex items-center gap-3 mt-1 text-sm flex-wrap" style="color:#666;">
+          <span>${TYPE_LABEL[course.type]}</span>
+          ${course.date ? `<span>·</span><span>${fmtDate(course.date)}</span>` : ''}
+          ${fmtTimeRange(course.timeStart, course.timeEnd) ? `<span>·</span><span style="color:#C8931F;">${fmtTimeRange(course.timeStart, course.timeEnd)}</span>` : ''}
+        </div>
+      </div>
+      <div class="flex gap-1 flex-none">
+        <button onclick="openEditModal('${course.id}')" title="Edit"
+                class="p-2 rounded-lg transition-colors"
+                style="color:#555;"
+                onmouseover="this.style.color='#C8931F';this.style.background='#252525'"
+                onmouseout="this.style.color='#555';this.style.background='transparent'">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+          </svg>
+        </button>
+        <button onclick="deleteCourse('${course.id}')" title="Delete"
+                class="p-2 rounded-lg transition-colors"
+                style="color:#555;"
+                onmouseover="this.style.color='#DC2626';this.style.background='#1f0d0d'"
+                onmouseout="this.style.color='#555';this.style.background='transparent'">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="mt-4 pt-4" style="border-top:1px solid #2a2a2a;">
+      <div class="flex items-center justify-between text-xs mb-2" style="color:#555;">
+        <span class="font-medium" style="color:#888;">Overall Progress</span>
+        <span style="color:${barColor}; font-weight:700;">${done}/${total} tasks · ${pct}%</span>
+      </div>
+      <div class="h-1.5 rounded-full overflow-hidden" style="background:#2a2a2a;">
+        <div class="progress-fill h-full rounded-full" style="width:${pct}%; background:${barColor};"></div>
+      </div>
+    </div>
+
+    <!-- Status changer -->
+    <div class="mt-4 pt-4" style="border-top:1px solid #2a2a2a;">
+      <div class="text-xs font-semibold uppercase tracking-widest mb-2.5" style="color:#444;">Change Status</div>
+      <div class="flex gap-2 flex-wrap">
+        ${['draft','pending','active','completed'].map(s => `
+          <button onclick="changeStatus('${course.id}','${s}')"
+                  class="sp-btn ${course.status===s?'sp-active-'+s:''} px-3 py-1.5 rounded-lg text-xs font-medium">
+            ${STATUS_LABEL[s]}
+          </button>`).join('')}
+      </div>
+    </div>
+  </div>`;
+
+  /* ── Pending Actions ── */
+  if (trigs.length) {
+    html += `
+    <div class="mb-5">
+      <div class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:#555;">⚡ Pending Actions</div>
+      <div class="space-y-2">
+        ${trigs.map(t => `
+        <div class="trigger-card rounded-xl p-4 flex items-center justify-between gap-4"
+             style="background:${t.bg}; border:1px solid ${t.border};">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center text-xl flex-none"
+                 style="background:#111; border:1px solid ${t.border};">
+              ${t.icon}
+            </div>
+            <div>
+              <div class="font-semibold text-sm" style="color:${t.color};">${t.title}</div>
+              <div class="text-xs mt-0.5" style="color:#555;">${t.desc}</div>
+              <div class="text-xs font-medium mt-0.5" style="color:#888;">${t.recipient}</div>
+            </div>
+          </div>
+          <button onclick="openNotifModal('${course.id}','${t.id}')"
+                  class="flex-none px-4 py-2 rounded-lg text-xs font-bold transition-all
+                         hover:brightness-110 active:scale-95 whitespace-nowrap"
+                  style="background:${t.color}; color:#000; box-shadow:0 2px 12px ${t.color}40;">
+            Review &amp; Send →
+          </button>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  /* ── Sent Notifications ── */
+  const sent = Object.entries(course.sentNotifs).filter(([,v])=>v).map(([k])=>k);
+  if (sent.length) {
+    const sentLabels = { certReady:'Certificates collection notified', logistics:'Logistics notified',
+                         studio:'Studio request sent', photography:'Photographer notified',
+                         auditorium:'Auditorium notified' };
+    html += `
+    <div class="mb-5">
+      <div class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:#555;">✅ Sent Notifications</div>
+      <div class="rounded-xl overflow-hidden" style="border:1px solid #2a2a2a;">
+        ${sent.map((k,i) => `
+        <div class="px-5 py-3 flex items-center justify-between ${i?'border-t':''}
+             " style="${i?'border-color:#222;':''} background:#1a1a1a;">
+          <div class="flex items-center gap-2 text-sm" style="color:#888;">
+            <svg class="w-4 h-4" style="color:#16A34A;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+            </svg>
+            ${sentLabels[k]||k}
+          </div>
+          <button onclick="resendNotif('${course.id}','${k}')"
+                  class="text-xs underline transition-colors" style="color:#555;"
+                  onmouseover="this.style.color='#C8931F'" onmouseout="this.style.color='#555'">
+            Re-send
+          </button>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  /* ── Task sections ── */
+  html += `<div class="space-y-3">`;
+  Object.entries(sections).forEach(([sec, secTasks]) => {
+    html += `
+    <div class="rounded-xl overflow-hidden" style="background:#1a1a1a; border:1px solid #2a2a2a;">
+      <div class="dark-section-hd px-5 py-3">
+        <h3 class="text-xs font-bold uppercase tracking-widest" style="color:#C8931F;">${sec}</h3>
+      </div>
+      <div>`;
+
+    secTasks.forEach((task, idx) => {
+      const val = course.tasks[task.id];
+      const border = idx > 0 ? 'border-t' : '';
+
+      if (task.isReminder) {
+        html += `
+        <div class="${border} px-5 py-4 flex items-center justify-between"
+             style="${idx?'border-color:#222;':''} background:#1f1800;">
+          <div class="flex items-center gap-3">
+            <span class="text-lg">🔔</span>
+            <div>
+              <div class="text-sm font-medium" style="color:#F59E0B;">${task.label}</div>
+              <div class="text-xs mt-0.5" style="color:#92400E;">Reminder — Ensure this is completed</div>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="setTask('${course.id}','${task.id}',true)"
+                    class="yn-yes ${val===true?'active':''} px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">
+              ✓ Done
+            </button>
+            <button onclick="setTask('${course.id}','${task.id}',false)"
+                    class="yn-no ${val===false?'active':''} px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">
+              ✗ Not Done
+            </button>
+          </div>
+        </div>`;
+      } else {
+        const dotColor = val===true ? '#16A34A' : val===false ? '#DC2626' : '#333';
+        html += `
+        <div class="${border} px-5 py-4" style="${idx?'border-color:#222;':''}">
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+              <div class="w-2 h-2 rounded-full flex-none transition-colors duration-200"
+                   style="background:${dotColor}; ${val===true?'box-shadow:0 0 6px #16A34A80;':val===false?'box-shadow:0 0 6px #DC262680;':''}"></div>
+              <span class="text-sm leading-snug" style="color:${val===true?'#ccc':val===false?'#888':'#aaa'}">${task.label}</span>
+              ${task.hasTrigger ? `<span class="flex-none text-xs px-1.5 py-0.5 rounded font-medium"
+                style="background:#241a00; color:#C8931F; border:1px solid #3a2900;">triggers action</span>` : ''}
+            </div>
+            <div class="flex gap-2 flex-none">
+              <button onclick="setTask('${course.id}','${task.id}',true)"
+                      class="yn-yes ${val===true?'active':''} px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">
+                Yes
+              </button>
+              <button onclick="setTask('${course.id}','${task.id}',false)"
+                      class="yn-no ${val===false?'active':''} px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">
+                No
+              </button>
+            </div>
+          </div>
+          ${task.hasInput && val===true ? `
+          <div class="mt-3 ml-5">
+            <div class="rounded-lg p-3" style="background:#130d20; border:1px solid #2a1a40;">
+              <label class="block text-xs font-semibold mb-2" style="color:#A78BFA;">
+                🎬 Teacher's Studio Requirements
+              </label>
+              <textarea rows="3"
+                        placeholder="e.g., extra camera, vocalist, helper, specific lighting setup…"
+                        class="dark-input w-full px-3 py-2 text-sm rounded-lg resize-none"
+                        oninput="updateStudioReqs('${course.id}',this.value)"
+              >${course.studioReqs||''}</textarea>
+            </div>
+          </div>` : ''}
+        </div>`;
+      }
+    });
+
+    html += `</div></div>`;
+  });
+  html += `</div>`;
+
+  panel.innerHTML = html;
+}
+
+/* ──────────────────────────────────────────────
+   MAIN RENDER
+────────────────────────────────────────────── */
+function render() {
+  renderSidebar();
+  renderDetail();
+}
+
+/* ──────────────────────────────────────────────
+   ACTIONS: COURSES
+────────────────────────────────────────────── */
+function selectCourse(id) {
+  db.selectedId = id;
+  render();
+}
+
+function setTask(courseId, taskId, val) {
+  const c = byId(courseId);
+  if (!c) return;
+  c.tasks[taskId] = val;
+  persist();
+  render();
+}
+
+function updateStudioReqs(courseId, val) {
+  const c = byId(courseId);
+  if (!c) return;
+  c.studioReqs = val;
+  persist();
+}
+
+function changeStatus(courseId, status) {
+  const c = byId(courseId);
+  if (!c) return;
+  c.status = status;
+  persist();
+  render();
+  showToast(`Status changed to ${STATUS_LABEL[status]}`, status==='active'?'✅':'ℹ️');
+}
+
+function deleteCourse(id) {
+  const c = byId(id);
+  if (!c) return;
+  if (!confirm(`Delete "${c.name}"? This cannot be undone.`)) return;
+  db.courses = db.courses.filter(x => x.id !== id);
+  if (db.selectedId === id) db.selectedId = null;
+  persist();
+  render();
+  showToast('Course deleted','🗑️');
+}
+
+/* ──────────────────────────────────────────────
+   ACTIONS: ADD/EDIT MODAL
+────────────────────────────────────────────── */
+function openAddModal() {
+  db.editingId = null;
+  db.modalType = null;
+  document.getElementById('modal-title').textContent = 'New Course';
+  document.getElementById('m-name').value = '';
+  document.getElementById('m-date').value = '';
+  document.getElementById('m-time-start').value = '';
+  document.getElementById('m-time-end').value = '';
+  updateModalTypeUI(null);
+  document.getElementById('course-modal').classList.remove('hidden');
+  setTimeout(() => document.getElementById('m-name').focus(), 50);
+}
+
+function openEditModal(id) {
+  const c = byId(id);
+  if (!c) return;
+  db.editingId = id;
+  db.modalType = c.type;
+  document.getElementById('modal-title').textContent = 'Edit Course';
+  document.getElementById('m-name').value = c.name;
+  document.getElementById('m-date').value = c.date||'';
+  document.getElementById('m-time-start').value = c.timeStart||'';
+  document.getElementById('m-time-end').value = c.timeEnd||'';
+  updateModalTypeUI(c.type);
+  document.getElementById('course-modal').classList.remove('hidden');
+}
+
+function selectModalType(t) {
+  db.modalType = t;
+  updateModalTypeUI(t);
+}
+
+function updateModalTypeUI(t) {
+  ['inside','outside','online'].forEach(k => {
+    document.getElementById('mt-'+k).classList.toggle('selected', k===t);
+  });
+  document.getElementById('mt-outside-note').classList.toggle('hidden', t!=='outside');
+}
+
+function saveCourse() {
+  const name      = document.getElementById('m-name').value.trim();
+  const date      = document.getElementById('m-date').value;
+  const timeStart = document.getElementById('m-time-start').value;
+  const timeEnd   = document.getElementById('m-time-end').value;
+  const type = db.modalType;
+
+  if (!name) { alert('Please enter a course name.'); return; }
+  if (!type) { alert('Please select a course type.'); return; }
+
+  if (db.editingId) {
+    const c = byId(db.editingId);
+    const prevType = c.type;
+    c.name = name;
+    c.date = date;
+    c.timeStart = timeStart;
+    c.timeEnd   = timeEnd;
+    if (prevType !== type) {
+      const tasks = {};
+      tasksFor(type).forEach(t => { tasks[t.id] = null; });
+      c.tasks = tasks;
+      c.type = type;
+      c.studioReqs = '';
+      if (type==='outside') c.status = 'pending';
+    }
+    showToast('Course updated','✏️');
+  } else {
+    const c = newCourse(name, type, date, timeStart, timeEnd);
+    db.courses.push(c);
+    db.selectedId = c.id;
+    showToast('Course created','✅');
+  }
+
+  persist();
+  closeModal();
+  render();
+}
+
+function closeModal() {
+  document.getElementById('course-modal').classList.add('hidden');
+  db.editingId = null;
+  db.modalType = null;
+}
+
+/* ──────────────────────────────────────────────
+   ACTIONS: NOTIFICATION MODAL
+────────────────────────────────────────────── */
+function openNotifModal(courseId, triggerId) {
+  const c  = byId(courseId);
+  if (!c) return;
+  const t  = triggersFor(c).find(x => x.id===triggerId);
+  if (!t) return;
+
+  db.pendingNotif = { courseId, triggerId };
+  document.getElementById('nm-icon').textContent      = t.icon;
+  document.getElementById('nm-icon').style.background = t.bg;
+  document.getElementById('nm-icon').style.border     = `1px solid ${t.border}`;
+  document.getElementById('nm-recipient').textContent  = t.recipient;
+  document.getElementById('nm-recipient').style.color  = t.color;
+  document.getElementById('nm-message').value          = t.message;
+  document.getElementById('notif-modal').classList.remove('hidden');
+}
+
+function closeNotifModal() {
+  document.getElementById('notif-modal').classList.add('hidden');
+  db.pendingNotif = null;
+}
+
+function approveAndSend() {
+  if (!db.pendingNotif) return;
+  const { courseId, triggerId } = db.pendingNotif;
+  const c   = byId(courseId);
+  const msg = document.getElementById('nm-message').value;
+  const t   = triggersFor(c).find(x => x.id===triggerId);
+  if (!t) return;
+
+  window.open(`https://wa.me/${t.phone}?text=${encodeURIComponent(msg)}`, '_blank');
+  c.sentNotifs[triggerId] = true;
+  persist();
+  closeNotifModal();
+  render();
+  showToast('WhatsApp opened — message ready to send','📤');
+}
+
+function resendNotif(courseId, triggerId) {
+  const c = byId(courseId);
+  if (!c) return;
+  c.sentNotifs[triggerId] = false;
+  persist();
+  render();
+  showToast('Notification reset — review & send again','🔄');
+}
+
+/* ──────────────────────────────────────────────
+   TOAST
+────────────────────────────────────────────── */
+let toastTimer;
+function showToast(msg, icon='ℹ️') {
+  const el = document.getElementById('toast');
+  document.getElementById('toast-icon').textContent = icon;
+  document.getElementById('toast-msg').textContent  = msg;
+  el.style.opacity   = '1';
+  el.style.transform = 'translateY(0)';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    el.style.opacity   = '0';
+    el.style.transform = 'translateY(8px)';
+  }, 2500);
+}
+
+/* ──────────────────────────────────────────────
+   KEYBOARD & BACKDROP
+────────────────────────────────────────────── */
+document.addEventListener('keydown', e => {
+  if (e.key==='Escape') { closeModal(); closeNotifModal(); }
+});
+document.getElementById('course-modal').addEventListener('click', function(e) {
+  if (e.target===this) closeModal();
+});
+document.getElementById('notif-modal').addEventListener('click', function(e) {
+  if (e.target===this) closeNotifModal();
+});
+
+/* ──────────────────────────────────────────────
+   INIT
+────────────────────────────────────────────── */
+render();
+</script>
+</body>
+</html>
