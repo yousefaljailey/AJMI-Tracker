@@ -457,6 +457,18 @@
         <div class="text-xs font-semibold uppercase tracking-widest mb-1" style="color:#555;">Recipient</div>
         <div id="nm-recipient" class="text-sm font-semibold" style="color:#C8931F;"></div>
       </div>
+      <!-- Phone input — shown only for requiresPhone triggers -->
+      <div id="nm-phone-wrap" class="hidden">
+        <div class="text-xs font-semibold uppercase tracking-widest mb-2" style="color:#555;">Teacher's Phone Number</div>
+        <div class="flex gap-2 items-center">
+          <span class="px-3 py-2.5 rounded-lg text-sm font-medium flex-none"
+                style="background:#111; border:1px solid #2a2a2a; color:#666;">+</span>
+          <input id="nm-phone" type="tel" placeholder="e.g. 97450123456"
+                 class="dark-input flex-1 px-3.5 py-2.5 rounded-lg text-sm"
+                 oninput="this.value=this.value.replace(/\D/g,'')">
+        </div>
+        <p class="text-xs mt-1.5" style="color:#555;">Include country code — number is saved for re-sends</p>
+      </div>
       <div>
         <div class="text-xs font-semibold uppercase tracking-widest mb-2" style="color:#555;">Message</div>
         <textarea id="nm-message" rows="7"
@@ -569,14 +581,14 @@ function tasksFor(type) {
       { id:'finalCheck',        label:'Attendance sheets & certificates saved in folder', section:'Final Check' },
     ];
   }
-  const base = [
+  const outsideCerts = type === 'outside' ? [
     { id:'prepareCerts',      label:'Prepare Certificates',        section:'Certificates' },
-  ];
+  ] : [];
   const inside = type === 'inside' ? [
     { id:'printNameSheet',    label:'Print Name Sheet',             section:'Inside Preparation' },
     { id:'attendanceSheet',   label:'Attendance Sheet',             section:'Inside Preparation' },
     { id:'sendEmailPax',      label:'Send Email to Participants',   section:'Inside Preparation' },
-    { id:'contactTeacher',    label:'Contact Course Teacher',       section:'Inside Preparation' },
+    { id:'contactTeacher',    label:'Contact Course Teacher',       section:'Inside Preparation', hasTrigger:true, requiresPhone:true },
     { id:'auditorium',        label:'Auditorium',                   section:'Facilities', hasTrigger:true },
     { id:'eveningCafeteria',  label:'Evening Cafeteria',            section:'Facilities', hasTrigger:true },
   ] : [];
@@ -584,12 +596,17 @@ function tasksFor(type) {
     { id:'studioNeeded',      label:'Studio Needed',                section:'Operations', hasTrigger:true, hasInput:true },
     { id:'photographyNeeded', label:'Photography Needed',           section:'Operations', hasTrigger:true },
   ] : [];
-  const checks = [
+  const evals = [
     { id:'studentEval',       label:'Student Evaluation Completed', section:'Evaluations' },
     { id:'teacherEval',       label:'Teacher Evaluation Completed', section:'Evaluations' },
+  ];
+  const insideCerts = type === 'inside' ? [
+    { id:'prepareCerts',      label:'Prepare Certificates',        section:'Certificates' },
+  ] : [];
+  const finalCheck = [
     { id:'finalCheck',        label:'Attendance sheets & certificates saved in folder', section:'Final Check' },
   ];
-  return [...base, ...inside, ...ops, ...checks];
+  return [...outsideCerts, ...inside, ...ops, ...evals, ...insideCerts, ...finalCheck];
 }
 
 /* ──────────────────────────────────────────────
@@ -711,6 +728,25 @@ ${studioReqs || '(يُرجى تحديث المتطلبات أولاً)'}
     });
   }
 
+  if (type === 'inside' && tasks.contactTeacher && !sentNotifs.contactTeacher) {
+    out.push({
+      id: 'contactTeacher',
+      icon: '👋',
+      title: 'Contact Course Teacher',
+      desc: 'Send intro message — enter teacher\'s number below',
+      recipient: 'Course Teacher — enter number',
+      requiresPhone: true,
+      phone: course.teacherPhone || '',
+      color: '#60A5FA',
+      bg: '#071020',
+      border: '#0c1e38',
+      message:
+`السلام عليكم أستاذ _______ ،
+أنا _____ منسق المعهد، بكون موجود معاك منسق الاسبوع القادم. إذا عندك أي حاجه او استفسار هذا رقمي.
+تحياتي.`,
+    });
+  }
+
   if (type === 'inside' && tasks.eveningCafeteria && !sentNotifs.cafeteria) {
     const startAr  = course.date    ? `يوم ${fmtDateArDay(course.date)}`    : '';
     const endAr    = course.dateEnd ? `يوم ${fmtDateArDay(course.dateEnd)}` : (course.date ? `يوم ${fmtDateArDay(course.date)}` : '');
@@ -758,7 +794,8 @@ function newCourse(name, type, date, dateEnd, timeStart, timeEnd) {
     status: type === 'outside' ? 'pending' : 'draft',
     tasks,
     studioReqs: '',
-    sentNotifs: { certReady:false, logistics:false, studio:false, photography:false, auditorium:false, cafeteria:false },
+    teacherPhone: '',
+    sentNotifs: { certReady:false, logistics:false, studio:false, photography:false, auditorium:false, cafeteria:false, contactTeacher:false },
     createdAt: new Date().toISOString(),
   };
 }
@@ -1046,7 +1083,8 @@ function renderDetail() {
   if (sent.length) {
     const sentLabels = { certReady:'Certificates collection notified', logistics:'Logistics notified',
                          studio:'Studio request sent', photography:'Photographer notified',
-                         auditorium:'Auditorium notified', cafeteria:'Cafeteria notified' };
+                         auditorium:'Auditorium notified', cafeteria:'Cafeteria notified',
+                         contactTeacher:'Teacher contacted' };
     html += `
     <div class="mb-5">
       <div class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:#555;">✅ Sent Notifications</div>
@@ -1319,6 +1357,15 @@ function openNotifModal(courseId, triggerId) {
   document.getElementById('nm-recipient').textContent  = t.recipient;
   document.getElementById('nm-recipient').style.color  = t.color;
   document.getElementById('nm-message').value          = t.message;
+  const phoneWrap = document.getElementById('nm-phone-wrap');
+  const phoneInput = document.getElementById('nm-phone');
+  if (t.requiresPhone) {
+    phoneWrap.classList.remove('hidden');
+    phoneInput.value = t.phone || '';
+  } else {
+    phoneWrap.classList.add('hidden');
+    phoneInput.value = '';
+  }
   document.getElementById('notif-modal').classList.remove('hidden');
 }
 
@@ -1335,7 +1382,13 @@ function approveAndSend() {
   const t   = triggersFor(c).find(x => x.id===triggerId);
   if (!t) return;
 
-  const phones = t.phones || [t.phone];
+  let phones = t.phones ? [...t.phones] : [t.phone];
+  if (t.requiresPhone) {
+    const entered = document.getElementById('nm-phone').value.trim().replace(/\D/g, '');
+    if (!entered) { alert('Please enter the teacher\'s phone number.'); return; }
+    phones = [entered];
+    c.teacherPhone = entered;
+  }
   phones.forEach((ph, i) => {
     setTimeout(() => window.open(`https://wa.me/${ph}?text=${encodeURIComponent(msg)}`, '_blank'), i * 400);
   });
