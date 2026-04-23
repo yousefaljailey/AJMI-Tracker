@@ -172,6 +172,54 @@
 
     /* Hide mobile back bar on desktop */
     .mobile-back-bar { display: none; }
+
+    /* ── Sidebar resize handle (desktop only) ── */
+    #sidebar-resizer {
+      width: 6px;
+      flex-shrink: 0;
+      cursor: col-resize;
+      position: relative;
+      background: transparent;
+      transition: background .15s ease;
+      z-index: 5;
+    }
+    #sidebar-resizer::after {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0;
+      left: 2px;
+      width: 1px;
+      background: #1e1e1e;
+      transition: background .15s ease, box-shadow .15s ease;
+    }
+    #sidebar-resizer:hover::after,
+    #sidebar-resizer.dragging::after {
+      background: #C8931F;
+      box-shadow: 0 0 8px #C8931F60;
+    }
+    #sidebar-resizer .grip {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity .15s ease;
+    }
+    #sidebar-resizer:hover .grip,
+    #sidebar-resizer.dragging .grip { opacity: 1; }
+    #sidebar-resizer .grip span {
+      display: block;
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: #C8931F;
+    }
+    @media (max-width: 767px) {
+      #sidebar-resizer { display: none; }
+    }
   </style>
 </head>
 <body class="h-screen overflow-hidden select-none" style="background:#111111;">
@@ -221,7 +269,7 @@
 <div id="app-shell" class="flex h-screen" style="display:none!important;">
 
   <!-- ══════════════ SIDEBAR ══════════════ -->
-  <aside style="background:#000; width:260px; min-width:260px;" class="flex flex-col overflow-hidden border-r" style2="border-color:#1e1e1e;">
+  <aside id="sidebar" style="background:#000; width:260px; min-width:260px;" class="flex flex-col overflow-hidden">
 
     <!-- Logo block — mirrors institute.aljazeera.net -->
     <div class="flex flex-col items-center py-5 px-4" style="border-bottom:1px solid #1e1e1e;">
@@ -266,6 +314,14 @@
     <!-- Course list -->
     <div id="sidebar-list" class="flex-1 overflow-y-auto"></div>
   </aside>
+
+  <!-- Drag-to-resize handle -->
+  <div id="sidebar-resizer">
+    <div class="grip">
+      <span></span><span></span><span></span>
+      <span></span><span></span><span></span>
+    </div>
+  </div>
 
   <!-- ══════════════ MAIN CONTENT ══════════════ -->
   <main class="flex-1 overflow-y-auto" style="background:#111111;">
@@ -1333,6 +1389,59 @@ document.getElementById('notif-modal').addEventListener('click', function(e) {
    INIT
 ────────────────────────────────────────────── */
 render();
+
+/* ──────────────────────────────────────────────
+   SIDEBAR RESIZE (desktop only)
+────────────────────────────────────────────── */
+(function() {
+  const MIN_W = 180, MAX_W = 520, DEFAULT_W = 260;
+  const STORE  = 'ajmi_sidebar_w';
+  const sidebar  = document.getElementById('sidebar');
+  const resizer  = document.getElementById('sidebar-resizer');
+
+  let dragging = false, startX = 0, startW = 0;
+
+  function isMobile() { return window.innerWidth < 768; }
+
+  function applyWidth(w) {
+    w = Math.max(MIN_W, Math.min(MAX_W, w));
+    sidebar.style.width    = w + 'px';
+    sidebar.style.minWidth = w + 'px';
+  }
+
+  function initWidth() {
+    if (isMobile()) return;
+    applyWidth(parseInt(localStorage.getItem(STORE)) || DEFAULT_W);
+  }
+
+  resizer.addEventListener('mousedown', function(e) {
+    if (isMobile()) return;
+    e.preventDefault();
+    dragging = true;
+    startX = e.clientX;
+    startW = sidebar.offsetWidth;
+    resizer.classList.add('dragging');
+    document.body.style.cursor    = 'col-resize';
+    document.body.style.userSelect = 'none';
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!dragging) return;
+    applyWidth(startW + (e.clientX - startX));
+  });
+
+  document.addEventListener('mouseup', function() {
+    if (!dragging) return;
+    dragging = false;
+    resizer.classList.remove('dragging');
+    document.body.style.cursor    = '';
+    document.body.style.userSelect = '';
+    localStorage.setItem(STORE, sidebar.offsetWidth);
+  });
+
+  window.addEventListener('resize', () => { if (!isMobile()) initWidth(); });
+  initWidth();
+})();
 </script>
 </body>
 </html>
