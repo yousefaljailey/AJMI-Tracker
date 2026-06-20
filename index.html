@@ -352,124 +352,39 @@
     </div>
 
     <div id="schedule-view" class="hidden p-6">
-      <div class="grid gap-5 xl:grid-cols-[1.35fr_0.65fr]">
-        <div class="space-y-5">
-          <div class="rounded-xl p-5" style="background:#1a1a1a; border:1px solid #2a2a2a;">
-            <div class="flex flex-col gap-4">
-              <div>
-                <div class="text-xs font-semibold uppercase tracking-widest mb-2" style="color:#555;">Import Weekly Schedule</div>
-                <div class="grid gap-3 md:grid-cols-2">
-                  <label class="block text-xs text-[#aaa]">
-                    Paste rows or upload CSV/TSV
-                    <textarea id="schedule-import-text" rows="4" dir="auto"
-                              class="dark-input w-full px-3 py-3 rounded-lg text-sm resize-none"
-                              placeholder="Course Name,Trainer,Date,Time,Type"></textarea>
-                  </label>
-                  <div class="space-y-3">
-                    <div class="rounded-lg p-3" style="background:#111; border:1px solid #222;">
-                      <div class="text-xs font-semibold mb-2" style="color:#888;">Upload file</div>
-                      <input id="schedule-file" type="file" accept=".csv,.tsv,.txt"
-                             class="dark-input w-full px-3 py-2 rounded-lg text-sm" onchange="handleScheduleFile(event)">
-                    </div>
-                    <button onclick="parseScheduleImport()"
-                            class="w-full py-2.5 rounded-lg text-sm font-bold transition-all hover:brightness-110 active:scale-95"
-                            style="background:#C8931F; color:#000;">
-                      Parse Schedule
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div class="rounded-xl p-4" style="background:#111; border:1px solid #222;">
-                <div class="text-xs font-semibold uppercase tracking-widest mb-2" style="color:#555;">Import tips</div>
-                <ul class="text-xs space-y-2" style="color:#888;">
-                  <li>1. Use comma, tab, or pipe-separated rows.</li>
-                  <li>2. Include columns such as Course, Trainer, Date, Time, Type.</li>
-                  <li>3. Imported items appear on the weekly grid.</li>
-                  <li>4. Drag cards between days to adjust the schedule.</li>
-                </ul>
-              </div>
-            </div>
-          </div>
+      <div class="max-w-4xl mx-auto">
+        <!-- Back button -->
+        <button onclick="switchTab('courses')"
+                class="mb-6 py-2 px-4 rounded-lg text-sm font-semibold transition-all hover:brightness-110"
+                style="background:#111; color:#fff; border:1px solid #333;">
+          ← Back to Courses
+        </button>
 
-          <div class="rounded-xl p-5" style="background:#1a1a1a; border:1px solid #2a2a2a;">
-            <div class="flex items-center justify-between gap-3 mb-4">
-              <div>
-                <div class="text-xs font-semibold uppercase tracking-widest" style="color:#555;">Weekly Schedule Board</div>
-                <div class="text-sm" style="color:#888;">Drag and drop items between weekdays.</div>
-              </div>
-              <button onclick="addEmptyScheduleItem()"
-                      class="py-2 px-3 rounded-lg text-sm font-semibold transition-all hover:brightness-110"
-                      style="background:#111; color:#fff; border:1px solid #333;">
-                + Add item
-              </button>
-            </div>
-            <div id="schedule-grid" class="overflow-x-auto">
-              <div class="grid min-w-[1200px] gap-3" style="grid-template-columns:repeat(7,1fr);">
-                <div class="rounded-2xl p-3" style="background:#111; border:1px solid #222; min-height:320px;">
-                  <div class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:#888;">Sun</div>
-                  <div id="day-Sun" class="space-y-3" ondragover="allowDrop(event)" ondrop="dropSchedule(event,'Sun')"></div>
-                </div>
-                <div class="rounded-2xl p-3" style="background:#111; border:1px solid #222; min-height:320px;">
-                  <div class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:#888;">Mon</div>
-                  <div id="day-Mon" class="space-y-3" ondragover="allowDrop(event)" ondrop="dropSchedule(event,'Mon')"></div>
-                </div>
-                <div class="rounded-2xl p-3" style="background:#111; border:1px solid #222; min-height:320px;">
-                  <div class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:#888;">Tue</div>
-                  <div id="day-Tue" class="space-y-3" ondragover="allowDrop(event)" ondrop="dropSchedule(event,'Tue')"></div>
-                </div>
-                <div class="rounded-2xl p-3" style="background:#111; border:1px solid #222; min-height:320px;">
-                  <div class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:#888;">Wed</div>
-                  <div id="day-Wed" class="space-y-3" ondragover="allowDrop(event)" ondrop="dropSchedule(event,'Wed')"></div>
-                </div>
-                <div class="rounded-2xl p-3" style="background:#111; border:1px solid #222; min-height:320px;">
-                  <div class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:#888;">Thu</div>
-                  <div id="day-Thu" class="space-y-3" ondragover="allowDrop(event)" ondrop="dropSchedule(event,'Thu')"></div>
-                </div>
-                <div class="rounded-2xl p-3" style="background:#111; border:1px solid #222; min-height:320px;">
-                  <div class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:#888;">Fri</div>
-                  <div id="day-Fri" class="space-y-3" ondragover="allowDrop(event)" ondrop="dropSchedule(event,'Fri')"></div>
-                </div>
-                <div class="rounded-2xl p-3" style="background:#111; border:1px solid #222; min-height:320px;">
-                  <div class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:#888;">Sat</div>
-                  <div id="day-Sat" class="space-y-3" ondragover="allowDrop(event)" ondrop="dropSchedule(event,'Sat')"></div>
-                </div>
+        <!-- Upload section -->
+        <div class="rounded-xl p-6 mb-6" style="background:#1a1a1a; border:1px solid #2a2a2a;">
+          <h2 class="text-lg font-bold text-white mb-4">Weekly Schedule</h2>
+          
+          <div class="space-y-4">
+            <div class="rounded-lg p-4" style="background:#111; border:1px dashed #333;">
+              <div class="text-center">
+                <div class="text-sm font-semibold mb-3" style="color:#888;">📸 Upload Schedule Image</div>
+                <input id="schedule-image-input" type="file" accept="image/*" 
+                       onchange="handleScheduleImageUpload(event)"
+                       class="hidden">
+                <button onclick="document.getElementById('schedule-image-input').click()"
+                        class="px-6 py-3 rounded-lg text-sm font-bold transition-all hover:brightness-110 active:scale-95"
+                        style="background:#C8931F; color:#000;">
+                  Choose Image
+                </button>
+                <div class="text-xs mt-3" style="color:#555;">PNG, JPG, or other image format</div>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="space-y-5">
-          <div class="rounded-xl p-5" style="background:#1a1a1a; border:1px solid #2a2a2a;">
-            <div class="flex items-center justify-between gap-3 mb-4">
-              <div>
-                <div class="text-xs font-semibold uppercase tracking-widest" style="color:#555;">Selected Schedule Item</div>
-                <div id="selected-schedule-summary" class="text-sm" style="color:#888;">Choose a card from the board.</div>
-              </div>
-              <button onclick="removeSelectedScheduleItem()"
-                      class="py-2 px-3 rounded-lg text-sm font-semibold transition-all hover:brightness-110"
-                      style="background:#111; color:#fff; border:1px solid #333;">
-                Remove
-              </button>
-            </div>
-            <div id="schedule-item-form" class="space-y-4 text-sm" style="color:#ddd;">
-              <div class="text-xs text-[#777]">No item selected.</div>
-            </div>
-          </div>
-
-          <div class="rounded-xl p-5" style="background:#111; border:1px solid #222;">
-            <div class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:#555;">Welcome Letter Preview</div>
-            <div id="welcome-letter-preview" class="prose prose-invert max-w-none text-sm leading-relaxed" style="color:#ccc; white-space:pre-wrap;"></div>
-            <button onclick="downloadWelcomeLetter()"
-                    class="mt-4 w-full py-2.5 rounded-lg text-sm font-bold transition-all hover:brightness-110 active:scale-95"
-                    style="background:#C8931F; color:#000;">
-              Download Word Document
-            </button>
-          </div>
-
-          <div class="rounded-xl p-5" style="background:#111; border:1px solid #222;">
-            <div class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:#555;">Coordinator Task List & Communication</div>
-            <div id="coordinator-tasks" class="text-sm leading-relaxed" style="color:#ccc;"></div>
-          </div>
+        <!-- Display schedules -->
+        <div id="schedules-container" class="space-y-4">
+          <!-- Schedules will be displayed here -->
         </div>
       </div>
     </div>
@@ -690,6 +605,7 @@
 ────────────────────────────────────────────── */
 const STORE_KEY = 'ajmi_courses_v2';
 const SCHEDULE_KEY = 'ajmi_schedule_v1';
+const SCHEDULE_IMAGES_KEY = 'ajmi_schedule_images_v1';
 
 let db = {
   courses: JSON.parse(localStorage.getItem(STORE_KEY) || '[]'),
@@ -698,13 +614,12 @@ let db = {
   modalType: null,
   pendingNotif: null,
   activeTab: 'courses',
-  schedule: JSON.parse(localStorage.getItem(SCHEDULE_KEY) || '[]'),
-  selectedScheduleId: null
+  scheduleImages: JSON.parse(localStorage.getItem(SCHEDULE_IMAGES_KEY) || '[]')
 };
 
 function persist() {
   localStorage.setItem(STORE_KEY, JSON.stringify(db.courses));
-  localStorage.setItem(SCHEDULE_KEY, JSON.stringify(db.schedule));
+  localStorage.setItem(SCHEDULE_IMAGES_KEY, JSON.stringify(db.scheduleImages));
 }
 
 function byId(id) {
@@ -723,7 +638,65 @@ function switchTab(tab) {
   scheduleBtn.style.background = tab === 'schedule' ? '#C8931F' : '#111';
   scheduleBtn.style.color      = tab === 'schedule' ? '#000' : '#fff';
   scheduleBtn.style.border     = tab === 'schedule' ? 'none' : '1px solid #333';
-  renderSchedule();
+  renderScheduleView();
+}
+
+function renderScheduleView() {
+  const container = document.getElementById('schedules-container');
+  if (!container) return;
+  container.innerHTML = '';
+  
+  if (db.scheduleImages && db.scheduleImages.length > 0) {
+    db.scheduleImages.forEach((img, index) => {
+      const div = document.createElement('div');
+      div.className = 'rounded-xl p-4 relative';
+      div.style.background = '#1a1a1a';
+      div.style.border = '1px solid #2a2a2a';
+      div.innerHTML = `
+        <div class="flex items-start justify-between gap-4 mb-3">
+          <div class="text-sm font-semibold text-white">Schedule ${index + 1}</div>
+          <button onclick="deleteScheduleImage(${index})"
+                  class="px-3 py-1 rounded text-sm transition-all hover:brightness-110"
+                  style="background:#111; color:#ff6b6b; border:1px solid #333;">
+            Delete
+          </button>
+        </div>
+        <img src="${img}" class="w-full rounded-lg border" style="border-color:#333; max-height:600px; object-fit:contain;">
+      `;
+      container.appendChild(div);
+    });
+  } else {
+    const empty = document.createElement('div');
+    empty.className = 'text-center py-8 rounded-xl p-4';
+    empty.style.background = '#111';
+    empty.style.border = '1px solid #222';
+    empty.innerHTML = '<div style="color:#555;">No schedule images uploaded yet</div>';
+    container.appendChild(empty);
+  }
+}
+
+function handleScheduleImageUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    if (!db.scheduleImages) db.scheduleImages = [];
+    db.scheduleImages.push(e.target.result);
+    persist();
+    renderScheduleView();
+    showToast('Schedule image added', '📸');
+  };
+  reader.readAsDataURL(file);
+}
+
+function deleteScheduleImage(index) {
+  if (db.scheduleImages && index >= 0 && index < db.scheduleImages.length) {
+    db.scheduleImages.splice(index, 1);
+    persist();
+    renderScheduleView();
+    showToast('Schedule image removed', '🗑️');
+  }
 }
 
 function normalizeScheduleType(value) {
@@ -1880,9 +1853,7 @@ document.getElementById('notif-modal').addEventListener('click', function(e) {
   if (e.target===this) closeNotifModal();
 });
 
-/* ──────────────────────────────────────────────
-   INIT
-────────────────────────────────────────────── */
+switchTab(db.activeTab);
 render();
 
 /* ──────────────────────────────────────────────
