@@ -325,17 +325,154 @@
 
   <!-- ══════════════ MAIN CONTENT ══════════════ -->
   <main class="flex-1 overflow-y-auto" style="background:#111111;">
-
-    <!-- Empty state -->
-    <div id="empty-state" class="h-full flex flex-col items-center justify-center text-center px-6">
-      <img src="ajmi-logo.svg" alt="" class="h-24 w-auto mb-6 opacity-20">
-      <p class="text-sm leading-relaxed" style="color:#555;">
-        Select a course to view its checklist,<br>or click <strong style="color:#C8931F;">New Course</strong> to get started.
-      </p>
+    <div class="px-6 py-5 border-b border-[#1e1e1e] flex flex-wrap items-center gap-3">
+      <button id="tab-courses" onclick="switchTab('courses')"
+              class="px-4 py-2 rounded-full text-sm font-semibold transition-all"
+              style="background:#C8931F; color:#000;">
+        Course Tracker
+      </button>
+      <button id="tab-schedule" onclick="switchTab('schedule')"
+              class="px-4 py-2 rounded-full text-sm font-semibold transition-all"
+              style="background:#111; color:#fff; border:1px solid #333;">
+        Schedule + Welcome Letter
+      </button>
     </div>
 
-    <!-- Detail panel -->
-    <div id="detail-panel" class="hidden p-6" style="max-width:760px; margin:0 auto;"></div>
+    <div id="courses-view" class="p-6">
+      <!-- Empty state -->
+      <div id="empty-state" class="h-full flex flex-col items-center justify-center text-center px-6">
+        <img src="ajmi-logo.svg" alt="" class="h-24 w-auto mb-6 opacity-20">
+        <p class="text-sm leading-relaxed" style="color:#555;">
+          Select a course to view its checklist,<br>or click <strong style="color:#C8931F;">New Course</strong> to get started.
+        </p>
+      </div>
+
+      <!-- Detail panel -->
+      <div id="detail-panel" class="hidden p-6" style="max-width:760px; margin:0 auto;"></div>
+    </div>
+
+    <div id="schedule-view" class="hidden p-6">
+      <div class="grid gap-5 xl:grid-cols-[1.35fr_0.65fr]">
+        <div class="space-y-5">
+          <div class="rounded-xl p-5" style="background:#1a1a1a; border:1px solid #2a2a2a;">
+            <div class="flex flex-col gap-4">
+              <div>
+                <div class="text-xs font-semibold uppercase tracking-widest mb-2" style="color:#555;">Import Weekly Schedule</div>
+                <div class="grid gap-3 md:grid-cols-2">
+                  <label class="block text-xs text-[#aaa]">
+                    Paste rows or upload CSV/TSV
+                    <textarea id="schedule-import-text" rows="4" dir="auto"
+                              class="dark-input w-full px-3 py-3 rounded-lg text-sm resize-none"
+                              placeholder="Course Name,Trainer,Date,Time,Type"></textarea>
+                  </label>
+                  <div class="space-y-3">
+                    <div class="rounded-lg p-3" style="background:#111; border:1px solid #222;">
+                      <div class="text-xs font-semibold mb-2" style="color:#888;">Upload file</div>
+                      <input id="schedule-file" type="file" accept=".csv,.tsv,.txt"
+                             class="dark-input w-full px-3 py-2 rounded-lg text-sm" onchange="handleScheduleFile(event)">
+                    </div>
+                    <button onclick="parseScheduleImport()"
+                            class="w-full py-2.5 rounded-lg text-sm font-bold transition-all hover:brightness-110 active:scale-95"
+                            style="background:#C8931F; color:#000;">
+                      Parse Schedule
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="rounded-xl p-4" style="background:#111; border:1px solid #222;">
+                <div class="text-xs font-semibold uppercase tracking-widest mb-2" style="color:#555;">Import tips</div>
+                <ul class="text-xs space-y-2" style="color:#888;">
+                  <li>1. Use comma, tab, or pipe-separated rows.</li>
+                  <li>2. Include columns such as Course, Trainer, Date, Time, Type.</li>
+                  <li>3. Imported items appear on the weekly grid.</li>
+                  <li>4. Drag cards between days to adjust the schedule.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-xl p-5" style="background:#1a1a1a; border:1px solid #2a2a2a;">
+            <div class="flex items-center justify-between gap-3 mb-4">
+              <div>
+                <div class="text-xs font-semibold uppercase tracking-widest" style="color:#555;">Weekly Schedule Board</div>
+                <div class="text-sm" style="color:#888;">Drag and drop items between weekdays.</div>
+              </div>
+              <button onclick="addEmptyScheduleItem()"
+                      class="py-2 px-3 rounded-lg text-sm font-semibold transition-all hover:brightness-110"
+                      style="background:#111; color:#fff; border:1px solid #333;">
+                + Add item
+              </button>
+            </div>
+            <div id="schedule-grid" class="overflow-x-auto">
+              <div class="grid min-w-[1200px] gap-3" style="grid-template-columns:repeat(7,1fr);">
+                <div class="rounded-2xl p-3" style="background:#111; border:1px solid #222; min-height:320px;">
+                  <div class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:#888;">Sun</div>
+                  <div id="day-Sun" class="space-y-3" ondragover="allowDrop(event)" ondrop="dropSchedule(event,'Sun')"></div>
+                </div>
+                <div class="rounded-2xl p-3" style="background:#111; border:1px solid #222; min-height:320px;">
+                  <div class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:#888;">Mon</div>
+                  <div id="day-Mon" class="space-y-3" ondragover="allowDrop(event)" ondrop="dropSchedule(event,'Mon')"></div>
+                </div>
+                <div class="rounded-2xl p-3" style="background:#111; border:1px solid #222; min-height:320px;">
+                  <div class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:#888;">Tue</div>
+                  <div id="day-Tue" class="space-y-3" ondragover="allowDrop(event)" ondrop="dropSchedule(event,'Tue')"></div>
+                </div>
+                <div class="rounded-2xl p-3" style="background:#111; border:1px solid #222; min-height:320px;">
+                  <div class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:#888;">Wed</div>
+                  <div id="day-Wed" class="space-y-3" ondragover="allowDrop(event)" ondrop="dropSchedule(event,'Wed')"></div>
+                </div>
+                <div class="rounded-2xl p-3" style="background:#111; border:1px solid #222; min-height:320px;">
+                  <div class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:#888;">Thu</div>
+                  <div id="day-Thu" class="space-y-3" ondragover="allowDrop(event)" ondrop="dropSchedule(event,'Thu')"></div>
+                </div>
+                <div class="rounded-2xl p-3" style="background:#111; border:1px solid #222; min-height:320px;">
+                  <div class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:#888;">Fri</div>
+                  <div id="day-Fri" class="space-y-3" ondragover="allowDrop(event)" ondrop="dropSchedule(event,'Fri')"></div>
+                </div>
+                <div class="rounded-2xl p-3" style="background:#111; border:1px solid #222; min-height:320px;">
+                  <div class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:#888;">Sat</div>
+                  <div id="day-Sat" class="space-y-3" ondragover="allowDrop(event)" ondrop="dropSchedule(event,'Sat')"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-5">
+          <div class="rounded-xl p-5" style="background:#1a1a1a; border:1px solid #2a2a2a;">
+            <div class="flex items-center justify-between gap-3 mb-4">
+              <div>
+                <div class="text-xs font-semibold uppercase tracking-widest" style="color:#555;">Selected Schedule Item</div>
+                <div id="selected-schedule-summary" class="text-sm" style="color:#888;">Choose a card from the board.</div>
+              </div>
+              <button onclick="removeSelectedScheduleItem()"
+                      class="py-2 px-3 rounded-lg text-sm font-semibold transition-all hover:brightness-110"
+                      style="background:#111; color:#fff; border:1px solid #333;">
+                Remove
+              </button>
+            </div>
+            <div id="schedule-item-form" class="space-y-4 text-sm" style="color:#ddd;">
+              <div class="text-xs text-[#777]">No item selected.</div>
+            </div>
+          </div>
+
+          <div class="rounded-xl p-5" style="background:#111; border:1px solid #222;">
+            <div class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:#555;">Welcome Letter Preview</div>
+            <div id="welcome-letter-preview" class="prose prose-invert max-w-none text-sm leading-relaxed" style="color:#ccc; white-space:pre-wrap;"></div>
+            <button onclick="downloadWelcomeLetter()"
+                    class="mt-4 w-full py-2.5 rounded-lg text-sm font-bold transition-all hover:brightness-110 active:scale-95"
+                    style="background:#C8931F; color:#000;">
+              Download Word Document
+            </button>
+          </div>
+
+          <div class="rounded-xl p-5" style="background:#111; border:1px solid #222;">
+            <div class="text-xs font-semibold uppercase tracking-widest mb-3" style="color:#555;">Coordinator Task List & Communication</div>
+            <div id="coordinator-tasks" class="text-sm leading-relaxed" style="color:#ccc;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </main>
 
 </div><!-- end #app-shell -->
@@ -552,21 +689,326 @@
    STATE
 ────────────────────────────────────────────── */
 const STORE_KEY = 'ajmi_courses_v2';
+const SCHEDULE_KEY = 'ajmi_schedule_v1';
 
 let db = {
   courses: JSON.parse(localStorage.getItem(STORE_KEY) || '[]'),
   selectedId: null,
   editingId: null,
   modalType: null,
-  pendingNotif: null
+  pendingNotif: null,
+  activeTab: 'courses',
+  schedule: JSON.parse(localStorage.getItem(SCHEDULE_KEY) || '[]'),
+  selectedScheduleId: null
 };
 
 function persist() {
   localStorage.setItem(STORE_KEY, JSON.stringify(db.courses));
+  localStorage.setItem(SCHEDULE_KEY, JSON.stringify(db.schedule));
 }
 
 function byId(id) {
   return db.courses.find(c => c.id === id);
+}
+
+function switchTab(tab) {
+  db.activeTab = tab;
+  document.getElementById('courses-view').classList.toggle('hidden', tab !== 'courses');
+  document.getElementById('schedule-view').classList.toggle('hidden', tab !== 'schedule');
+  const coursesBtn = document.getElementById('tab-courses');
+  const scheduleBtn = document.getElementById('tab-schedule');
+  coursesBtn.style.background = tab === 'courses' ? '#C8931F' : '#111';
+  coursesBtn.style.color      = tab === 'courses' ? '#000' : '#fff';
+  coursesBtn.style.border     = tab === 'courses' ? 'none' : '1px solid #333';
+  scheduleBtn.style.background = tab === 'schedule' ? '#C8931F' : '#111';
+  scheduleBtn.style.color      = tab === 'schedule' ? '#000' : '#fff';
+  scheduleBtn.style.border     = tab === 'schedule' ? 'none' : '1px solid #333';
+  renderSchedule();
+}
+
+function normalizeScheduleType(value) {
+  const v = (value || '').toString().trim().toLowerCase();
+  if (v.includes('online')) return 'online';
+  if (v.includes('video') || v.includes('record') || v.includes('recording')) return 'video';
+  if (v.includes('evening') || v.includes('pm') || v.includes('purple')) return 'evening';
+  return 'morning';
+}
+
+function determineCoordinator(courseName) {
+  const name = (courseName || '').toString().toLowerCase();
+  if (name.includes('digital') || name.includes('media presence') || name.includes('multi-platform') || name.includes('leadership')) return 'Maaz';
+  if (name.includes('sports') || name.includes('sport') || name.includes('events') || name.includes('conditioning')) return 'Murad';
+  return 'Val';
+}
+
+function parseScheduleImport() {
+  const text = document.getElementById('schedule-import-text').value.trim();
+  if (!text) { alert('Please paste schedule rows to import.'); return; }
+  const lines = text.split(/\r?\n/).filter(line => line.trim());
+  const items = [];
+  lines.forEach((line, index) => {
+    const cols = line.split(/,|\t|\|/).map(cell => cell.trim());
+    if (cols.length < 4) return;
+    const [name, trainer, dateVal, timeVal, typeVal] = cols;
+    const [dateStr, dateEndStr] = (dateVal || '').split(/\s*-\s*/).map(v => v.trim());
+    const [startTime, endTime] = (timeVal || '').split(/\s*-\s*/).map(v => v.trim());
+    const date = dateStr || '';
+    const day = (() => {
+      if (!date) return 'Sun';
+      const parsed = new Date(date.replace(/\//g, '-'));
+      if (Number.isNaN(parsed.getTime())) return 'Sun';
+      return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][parsed.getDay()];
+    })();
+    items.push({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2) + index,
+      name: name || 'Untitled Course',
+      trainer: trainer || '',
+      date: date,
+      dateEnd: dateEndStr || date,
+      time: timeVal || '',
+      timeStart: startTime || '',
+      timeEnd: endTime || '',
+      type: normalizeScheduleType(typeVal),
+      coordinator: determineCoordinator(name),
+      notes: '',
+      day
+    });
+  });
+  if (!items.length) { alert('No valid schedule rows found.'); return; }
+  db.schedule = [...db.schedule, ...items];
+  persist();
+  renderSchedule();
+  showToast(`${items.length} schedule item${items.length!==1?'s':''} imported`, '✅');
+}
+
+function handleScheduleFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    document.getElementById('schedule-import-text').value = reader.result;
+    parseScheduleImport();
+  };
+  reader.readAsText(file, 'utf-8');
+}
+
+function addEmptyScheduleItem() {
+  const item = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2),
+    name: 'New course',
+    trainer: '',
+    date: '',
+    dateEnd: '',
+    time: '',
+    timeStart: '',
+    timeEnd: '',
+    type: 'morning',
+    coordinator: 'Maaz',
+    notes: '',
+    day: 'Sun'
+  };
+  db.schedule.push(item);
+  persist();
+  renderSchedule();
+  selectScheduleItem(item.id);
+}
+
+function renderSchedule() {
+  const dayContainers = {
+    Sun: document.getElementById('day-Sun'),
+    Mon: document.getElementById('day-Mon'),
+    Tue: document.getElementById('day-Tue'),
+    Wed: document.getElementById('day-Wed'),
+    Thu: document.getElementById('day-Thu'),
+    Fri: document.getElementById('day-Fri'),
+    Sat: document.getElementById('day-Sat')
+  };
+  Object.values(dayContainers).forEach(el => { if (el) el.innerHTML = ''; });
+  db.schedule.forEach(item => {
+    const card = document.createElement('div');
+    card.className = 'rounded-2xl p-3 cursor-pointer';
+    card.style.background = '#111';
+    card.style.border = '1px solid #222';
+    card.draggable = true;
+    card.ondragstart = e => dragSchedule(e, item.id);
+    card.onclick = () => selectScheduleItem(item.id);
+    const typeLabel = item.type === 'online' ? 'Online' : item.type === 'video' ? 'Video Recording' : item.type === 'evening' ? 'Evening' : 'Morning';
+    card.innerHTML = `<div class="text-sm font-semibold" style="color:#fff;">${item.name}</div><div class="text-xs mt-2" style="color:#888;">${item.trainer || '-'} · ${typeLabel}</div><div class="text-xs mt-1" style="color:#555;">${item.date}${item.time ? ` · ${item.time}` : ''}</div>`;
+    const target = dayContainers[item.day] || dayContainers.Sun;
+    if (target) target.appendChild(card);
+  });
+  if (db.selectedScheduleId) selectScheduleItem(db.selectedScheduleId);
+}
+
+function dragSchedule(event, id) {
+  event.dataTransfer.setData('text/plain', id);
+}
+
+function allowDrop(event) {
+  event.preventDefault();
+}
+
+function dropSchedule(event, day) {
+  event.preventDefault();
+  const id = event.dataTransfer.getData('text/plain');
+  const item = byScheduleId(id);
+  if (!item) return;
+  item.day = day;
+  persist();
+  renderSchedule();
+}
+
+function selectScheduleItem(id) {
+  db.selectedScheduleId = id;
+  const item = byScheduleId(id);
+  const summary = document.getElementById('selected-schedule-summary');
+  const form = document.getElementById('schedule-item-form');
+  if (!item || !summary || !form) return;
+  summary.textContent = `${item.name} — ${item.trainer || 'No trainer'} · ${item.type}`;
+  form.innerHTML = `
+    <label class="block text-xs text-[#aaa]">Course title
+      <input value="${item.name}" oninput="updateScheduleField('${id}','name',this.value)"
+             class="dark-input w-full px-3 py-2.5 rounded-lg text-sm mt-1">
+    </label>
+    <label class="block text-xs text-[#aaa]">Trainer name
+      <input value="${item.trainer}" oninput="updateScheduleField('${id}','trainer',this.value)"
+             class="dark-input w-full px-3 py-2.5 rounded-lg text-sm mt-1">
+    </label>
+    <label class="block text-xs text-[#aaa]">Date
+      <input value="${item.date}" oninput="updateScheduleField('${id}','date',this.value)"
+             class="dark-input w-full px-3 py-2.5 rounded-lg text-sm mt-1">
+    </label>
+    <label class="block text-xs text-[#aaa]">Time
+      <input value="${item.time}" oninput="updateScheduleField('${id}','time',this.value)"
+             class="dark-input w-full px-3 py-2.5 rounded-lg text-sm mt-1">
+    </label>
+    <label class="block text-xs text-[#aaa]">Type
+      <select onchange="updateScheduleField('${id}','type',this.value)" class="dark-select w-full px-3 py-2.5 rounded-lg text-sm mt-1">
+        <option value="morning" ${item.type==='morning'?'selected':''}>Morning</option>
+        <option value="evening" ${item.type==='evening'?'selected':''}>Evening</option>
+        <option value="online" ${item.type==='online'?'selected':''}>Online</option>
+        <option value="video" ${item.type==='video'?'selected':''}>Video Recording</option>
+      </select>
+    </label>
+    <label class="block text-xs text-[#aaa]">Coordinator
+      <input value="${item.coordinator}" oninput="updateScheduleField('${id}','coordinator',this.value)"
+             class="dark-input w-full px-3 py-2.5 rounded-lg text-sm mt-1">
+    </label>
+    <label class="block text-xs text-[#aaa]">Notes / Link
+      <textarea rows="3" oninput="updateScheduleField('${id}','notes',this.value)"
+                class="dark-input w-full px-3 py-2.5 rounded-lg text-sm mt-1">${item.notes}</textarea>
+    </label>
+    <label class="block text-xs text-[#aaa]">Day of week
+      <select onchange="updateScheduleField('${id}','day',this.value)" class="dark-select w-full px-3 py-2.5 rounded-lg text-sm mt-1">
+        <option value="Sun" ${item.day==='Sun'?'selected':''}>Sun</option>
+        <option value="Mon" ${item.day==='Mon'?'selected':''}>Mon</option>
+        <option value="Tue" ${item.day==='Tue'?'selected':''}>Tue</option>
+        <option value="Wed" ${item.day==='Wed'?'selected':''}>Wed</option>
+        <option value="Thu" ${item.day==='Thu'?'selected':''}>Thu</option>
+        <option value="Fri" ${item.day==='Fri'?'selected':''}>Fri</option>
+        <option value="Sat" ${item.day==='Sat'?'selected':''}>Sat</option>
+      </select>
+    </label>
+  `;
+  renderWelcomeLetter(item);
+  renderCoordinatorTasks(item);
+}
+
+function updateScheduleField(id, field, value) {
+  const item = byScheduleId(id);
+  if (!item) return;
+  item[field] = value;
+  persist();
+  renderSchedule();
+  if (db.selectedScheduleId === id) {
+    selectScheduleItem(id);
+  }
+}
+
+function removeSelectedScheduleItem() {
+  if (!db.selectedScheduleId) return;
+  db.schedule = db.schedule.filter(item => item.id !== db.selectedScheduleId);
+  db.selectedScheduleId = null;
+  persist();
+  renderSchedule();
+  const summary = document.getElementById('selected-schedule-summary');
+  const form = document.getElementById('schedule-item-form');
+  if (summary) summary.textContent = 'Choose a card from the board.';
+  if (form) form.innerHTML = '<div class="text-xs text-[#777]">No item selected.</div>';
+  const letter = document.getElementById('welcome-letter-preview');
+  if (letter) letter.textContent = '';
+  const tasks = document.getElementById('coordinator-tasks');
+  if (tasks) tasks.textContent = '';
+}
+
+function renderWelcomeLetter(item) {
+  if (!item) return;
+  const title = item.name || 'Course';
+  const trainer = item.trainer || 'Instructor';
+  const date = item.date || '';
+  const dateEnd = item.dateEnd || item.date || '';
+  const time = item.time || '';
+  const type = item.type;
+  const isOnline = type === 'online';
+  const isVideo = type === 'video';
+  const linkPlaceholder = item.notes || 'Insert link or details here.';
+  const bodyLink = isOnline
+    ? `\n\nالرجاء استخدام الرابط التالي لحضور الجلسة عبر الإنترنت:\n${linkPlaceholder}`
+    : isVideo
+      ? `\n\nرابط التسجيل المسجل:\n${linkPlaceholder}`
+      : `\n\nالموقع: سيتم تأكيده لاحقاً.`;
+  const content = `عزيزي المتدرب،\n\nنرحب بك لحضور دورة "${title}".`
+    + `\n\nستسمر الدورة من ${date}`
+    + `${dateEnd && dateEnd !== date ? ' إلى ' + dateEnd : ''}`
+    + `${time ? '، من ' + time : ''}.`
+    + `${bodyLink}`
+    + `\n\nإذا كان لديك أي استفسار، يرجى التواصل.\n\nمع خالص الشكر والتقدير،\n${item.coordinator}`;
+  const preview = document.getElementById('welcome-letter-preview');
+  if (preview) preview.textContent = content;
+}
+
+function renderCoordinatorTasks(item) {
+  if (!item) return;
+  const lines = [];
+  lines.push(`Coordinator: ${item.coordinator}`);
+  lines.push(`Course: ${item.name}`);
+  lines.push(`Trainer: ${item.trainer || 'TBD'}`);
+  lines.push(`Date: ${item.date}${item.dateEnd && item.dateEnd !== item.date ? ' to ' + item.dateEnd : ''}`);
+  lines.push(`Time: ${item.time || 'TBD'}`);
+  lines.push(`Type: ${item.type === 'online' ? 'Online' : item.type === 'video' ? 'Video Recording' : item.type === 'evening' ? 'Evening' : 'Morning'}`);
+  lines.push('');
+  lines.push('Tasks:');
+  lines.push('- Confirm trainer details and course materials.');
+  if (item.type === 'online') {
+    lines.push('- Provide Teams/Zoom link to trainees.');
+    lines.push(`- Online meeting link: ${item.notes || 'TBD'}`);
+  } else if (item.type === 'video') {
+    lines.push('- Confirm recording upload and share link.');
+    lines.push(`- Recording link: ${item.notes || 'TBD'}`);
+  } else {
+    lines.push('- Confirm classroom and on-site logistics.');
+  }
+  lines.push('- Send welcome letter to trainees.');
+  const output = document.getElementById('coordinator-tasks');
+  if (output) output.textContent = lines.join('\n');
+}
+
+function downloadWelcomeLetter() {
+  const content = document.getElementById('welcome-letter-preview').textContent;
+  if (!content) { alert('No welcome letter available.'); return; }
+  const blob = new Blob([content], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'welcome-letter.doc';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function byScheduleId(id) {
+  return db.schedule.find(item => item.id === id);
 }
 
 /* ──────────────────────────────────────────────
