@@ -352,7 +352,7 @@
     </div>
 
     <div id="schedule-view" class="hidden p-6">
-      <div class="max-w-4xl mx-auto">
+      <div class="max-w-5xl mx-auto">
         <!-- Back button -->
         <button onclick="switchTab('courses')"
                 class="mb-6 py-2 px-4 rounded-lg text-sm font-semibold transition-all hover:brightness-110"
@@ -360,31 +360,175 @@
           ← Back to Courses
         </button>
 
-        <!-- Upload section -->
-        <div class="rounded-xl p-6 mb-6" style="background:#1a1a1a; border:1px solid #2a2a2a;">
-          <h2 class="text-lg font-bold text-white mb-4">Weekly Schedule</h2>
-          
-          <div class="space-y-4">
-            <div class="rounded-lg p-4" style="background:#111; border:1px dashed #333;">
-              <div class="text-center">
-                <div class="text-sm font-semibold mb-3" style="color:#888;">📸 Upload Schedule Image</div>
-                <input id="schedule-image-input" type="file" accept="image/*" 
-                       onchange="handleScheduleImageUpload(event)"
-                       class="hidden">
-                <button onclick="document.getElementById('schedule-image-input').click()"
-                        class="px-6 py-3 rounded-lg text-sm font-bold transition-all hover:brightness-110 active:scale-95"
-                        style="background:#C8931F; color:#000;">
-                  Choose Image
-                </button>
-                <div class="text-xs mt-3" style="color:#555;">PNG, JPG, or other image format</div>
+        <!-- Tabs for Schedule and Letters -->
+        <div class="flex gap-2 mb-6">
+          <button onclick="switchScheduleTab('schedule')"
+                  class="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+                  id="sched-tab-btn"
+                  style="background:#C8931F; color:#000;">
+            📸 Schedule
+          </button>
+          <button onclick="switchScheduleTab('letters')"
+                  class="px-4 py-2 rounded-lg text-sm font-semibold transition-all"
+                  id="letters-tab-btn"
+                  style="background:#111; color:#fff; border:1px solid #333;">
+            📄 Welcome Letters
+          </button>
+        </div>
+
+        <!-- Schedule Tab -->
+        <div id="schedule-tab" class="space-y-4">
+          <!-- Upload section -->
+          <div class="rounded-xl p-6" style="background:#1a1a1a; border:1px solid #2a2a2a;">
+            <h2 class="text-lg font-bold text-white mb-4">Weekly Schedule</h2>
+            
+            <div class="space-y-4">
+              <div class="rounded-lg p-4" style="background:#111; border:1px dashed #333;">
+                <div class="text-center">
+                  <div class="text-sm font-semibold mb-3" style="color:#888;">📸 Upload Schedule Image</div>
+                  <input id="schedule-image-input" type="file" accept="image/*" 
+                         onchange="handleScheduleImageUpload(event)"
+                         class="hidden">
+                  <button onclick="document.getElementById('schedule-image-input').click()"
+                          class="px-6 py-3 rounded-lg text-sm font-bold transition-all hover:brightness-110 active:scale-95"
+                          style="background:#C8931F; color:#000;">
+                    Choose Image
+                  </button>
+                  <div class="text-xs mt-3" style="color:#555;">PNG, JPG, or other image format</div>
+                </div>
               </div>
             </div>
           </div>
+
+          <!-- Display schedules -->
+          <div id="schedules-container" class="space-y-4">
+            <!-- Schedules will be displayed here -->
+          </div>
         </div>
 
-        <!-- Display schedules -->
-        <div id="schedules-container" class="space-y-4">
-          <!-- Schedules will be displayed here -->
+        <!-- Welcome Letters Tab -->
+        <div id="letters-tab" class="hidden space-y-4">
+          <!-- Letter generator form -->
+          <div class="rounded-xl p-6" style="background:#1a1a1a; border:1px solid #2a2a2a;">
+            <h2 class="text-lg font-bold text-white mb-4">Generate Welcome Letter</h2>
+            
+            <div class="grid gap-4 md:grid-cols-2">
+              <!-- Course info -->
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-widest mb-2" style="color:#666;">
+                  Course Name *
+                </label>
+                <input id="letter-course-name" type="text" dir="auto" placeholder="e.g., Digital Marketing"
+                       class="dark-input w-full px-3 py-2.5 rounded-lg text-sm">
+              </div>
+              
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-widest mb-2" style="color:#666;">
+                  Coordinator Name *
+                </label>
+                <input id="letter-coordinator" type="text" dir="auto" placeholder="e.g., Maaz Al-Jailey"
+                       class="dark-input w-full px-3 py-2.5 rounded-lg text-sm">
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-widest mb-2" style="color:#666;">
+                  Trainer/Instructor *
+                </label>
+                <input id="letter-trainer" type="text" dir="auto" placeholder="e.g., Sami Zeidan"
+                       class="dark-input w-full px-3 py-2.5 rounded-lg text-sm">
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-widest mb-2" style="color:#666;">
+                  Language
+                </label>
+                <select id="letter-language" class="dark-select w-full px-3 py-2.5 rounded-lg text-sm">
+                  <option value="english">English</option>
+                  <option value="arabic">عربي (Arabic)</option>
+                  <option value="bilingual">Both (Bilingual)</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-widest mb-2" style="color:#666;">
+                  From Date *
+                </label>
+                <input id="letter-date-from" type="date"
+                       class="dark-input w-full px-3 py-2.5 rounded-lg text-sm">
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-widest mb-2" style="color:#666;">
+                  To Date *
+                </label>
+                <input id="letter-date-to" type="date"
+                       class="dark-input w-full px-3 py-2.5 rounded-lg text-sm">
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-widest mb-2" style="color:#666;">
+                  Time (e.g., 9:00 AM to 4:00 PM)
+                </label>
+                <input id="letter-time" type="text" placeholder="9:00 AM to 4:00 PM"
+                       class="dark-input w-full px-3 py-2.5 rounded-lg text-sm">
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-widest mb-2" style="color:#666;">
+                  Location/Hall (e.g., Fatima Al-Fihri – First Floor)
+                </label>
+                <input id="letter-location" type="text" dir="auto" placeholder="Hall location"
+                       class="dark-input w-full px-3 py-2.5 rounded-lg text-sm">
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-widest mb-2" style="color:#666;">
+                  Gate Entry (e.g., Gate No. (1) or (03))
+                </label>
+                <input id="letter-gate" type="text" placeholder="Gate No. (1) or (03)"
+                       class="dark-input w-full px-3 py-2.5 rounded-lg text-sm">
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-widest mb-2" style="color:#666;">
+                  Course Type
+                </label>
+                <select id="letter-type" class="dark-select w-full px-3 py-2.5 rounded-lg text-sm">
+                  <option value="inside">Inside (In-Person)</option>
+                  <option value="online">Online</option>
+                  <option value="video">Video Recording</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-widest mb-2" style="color:#666;">
+                  Zoom Link (for online courses)
+                </label>
+                <input id="letter-zoom-link" type="url" placeholder="https://zoom.us/..."
+                       class="dark-input w-full px-3 py-2.5 rounded-lg text-sm">
+              </div>
+            </div>
+
+            <div class="mt-5 grid gap-3 md:grid-cols-2">
+              <button onclick="previewWelcomeLetter()"
+                      class="py-2.5 px-4 rounded-lg text-sm font-bold transition-all hover:brightness-110"
+                      style="background:#111; color:#fff; border:1px solid #333;">
+                Preview
+              </button>
+              <button onclick="downloadWelcomeLetterAsWord()"
+                      class="py-2.5 px-4 rounded-lg text-sm font-bold transition-all hover:brightness-110 active:scale-95"
+                      style="background:#C8931F; color:#000;">
+                Download as Word
+              </button>
+            </div>
+          </div>
+
+          <!-- Preview -->
+          <div id="letter-preview-container" class="hidden rounded-xl p-6" style="background:#1a1a1a; border:1px solid #2a2a2a;">
+            <div class="text-xs font-semibold uppercase tracking-widest mb-4" style="color:#555;">Preview</div>
+            <div id="letter-preview-text" class="prose prose-invert text-sm leading-relaxed p-6 rounded-lg"
+                 style="background:#111; border:1px solid #222; color:#ccc; white-space:pre-wrap; overflow-x-auto;"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -697,6 +841,232 @@ function deleteScheduleImage(index) {
     renderScheduleView();
     showToast('Schedule image removed', '🗑️');
   }
+}
+
+function switchScheduleTab(tab) {
+  const schedTab = document.getElementById('schedule-tab');
+  const lettersTab = document.getElementById('letters-tab');
+  const schedBtn = document.getElementById('sched-tab-btn');
+  const lettersBtn = document.getElementById('letters-tab-btn');
+  
+  if (tab === 'schedule') {
+    schedTab.classList.remove('hidden');
+    lettersTab.classList.add('hidden');
+    schedBtn.style.background = '#C8931F';
+    schedBtn.style.color = '#000';
+    schedBtn.style.border = 'none';
+    lettersBtn.style.background = '#111';
+    lettersBtn.style.color = '#fff';
+    lettersBtn.style.border = '1px solid #333';
+  } else {
+    schedTab.classList.add('hidden');
+    lettersTab.classList.remove('hidden');
+    schedBtn.style.background = '#111';
+    schedBtn.style.color = '#fff';
+    schedBtn.style.border = '1px solid #333';
+    lettersBtn.style.background = '#C8931F';
+    lettersBtn.style.color = '#000';
+    lettersBtn.style.border = 'none';
+  }
+}
+
+function previewWelcomeLetter() {
+  const courseName = document.getElementById('letter-course-name').value.trim();
+  const coordinator = document.getElementById('letter-coordinator').value.trim();
+  const trainer = document.getElementById('letter-trainer').value.trim();
+  const language = document.getElementById('letter-language').value;
+  const dateFrom = document.getElementById('letter-date-from').value;
+  const dateTo = document.getElementById('letter-date-to').value;
+  const time = document.getElementById('letter-time').value.trim();
+  const location = document.getElementById('letter-location').value.trim();
+  const gate = document.getElementById('letter-gate').value.trim();
+  const courseType = document.getElementById('letter-type').value;
+  const zoomLink = document.getElementById('letter-zoom-link').value.trim();
+
+  if (!courseName || !coordinator || !trainer || !dateFrom || !dateTo) {
+    alert('Please fill in all required fields (*).'); 
+    return;
+  }
+
+  let letter = '';
+
+  if (language === 'english' || language === 'bilingual') {
+    letter += generateEnglishLetter(courseName, coordinator, trainer, dateFrom, dateTo, time, location, gate, courseType, zoomLink);
+  }
+
+  if (language === 'arabic' || language === 'bilingual') {
+    if (language === 'bilingual') letter += '\n\n' + '='.repeat(80) + '\n\n';
+    letter += generateArabicLetter(courseName, coordinator, trainer, dateFrom, dateTo, time, location, gate, courseType, zoomLink);
+  }
+
+  const container = document.getElementById('letter-preview-container');
+  const preview = document.getElementById('letter-preview-text');
+  preview.textContent = letter;
+  container.classList.remove('hidden');
+  container.scrollIntoView({ behavior: 'smooth' });
+}
+
+function generateEnglishLetter(courseName, coordinator, trainer, dateFrom, dateTo, time, location, gate, courseType, zoomLink) {
+  const dateFromStr = new Date(dateFrom).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const dateToStr = new Date(dateTo).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  let letter = `Dear Participants of ${courseName},
+
+Greetings,
+
+I am pleased to welcome you and look forward to meeting you at Al Jazeera Media Institute.
+
+The course dates:
+
+From       ${dateFromStr}
+To         ${dateToStr}
+From       ${time || 'TBD'}
+Hall:      ${location || 'TBD'}
+Instructor: ${trainer}
+
+`;
+
+  if (courseType === 'online' && zoomLink) {
+    letter += `Please find the course link and password below:
+
+${zoomLink}
+
+Please take a few minutes to prepare as follows:
+1- Log in to Zoom 10 minutes before the course begins.
+2- Use a computer instead of a mobile phone to ensure that you can view the trainer's presentation clearly.
+3- Keep your camera on during the training to confirm your attendance.
+4- Mute your microphone unless you wish to ask a question or interact with the trainer.
+
+`;
+  }
+
+  letter += `${gate ? `Entry will be through ${gate}.\n\n` : ''}Please review the attached file (Welcome Letter) for important details and instructions related to the institute.
+
+I will be available to assist you and provide any support you may need.
+You may contact me using the number below.
+
+With sincere thanks and appreciation,
+
+Course Coordinator
+${coordinator}
++974 51466789`;
+
+  return letter;
+}
+
+function generateArabicLetter(courseName, coordinatorName, trainerName, dateFrom, dateTo, time, location, gate, courseType, zoomLink) {
+  const dateFromStr = new Date(dateFrom).toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const dateToStr = new Date(dateTo).toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  let letter = `مرحبا أساتذة ومدربي ${courseName}،
+
+تحيات طيبة وبعد،،،
+
+يسعدني الترحيب بكم والتطلع إلى لقائكم في معهد الجزيرة للإعلام
+
+تاريخ الدورة:
+
+من:        ${dateFromStr}
+إلى:       ${dateToStr}
+من الساعة: ${time || 'قريباً'}
+القاعة:    ${location || 'قريباً'}
+المدرب:    ${trainerName}
+
+`;
+
+  if (courseType === 'online' && zoomLink) {
+    letter += `الرجاء العثور على رابط الدورة وكلمة المرور أدناه:
+
+${zoomLink}
+
+يرجى أخذ بضع دقائق للاستعداد على النحو التالي:
+1- تسجيل الدخول إلى Zoom قبل 10 دقائق من بدء الدورة.
+2- استخدام جهاز كمبيوتر بدلاً من هاتف محمول للتأكد من أنه يمكنك مشاهدة عرض المدرب بوضوح.
+3- أبقِ الكاميرا مفتوحة أثناء التدريب لتأكيد حضورك.
+4- كتم صوت الميكروفون ما لم تكن تريد طرح سؤال أو التفاعل مع المدرب.
+
+`;
+  }
+
+  letter += `${gate ? `سيكون الدخول عبر ${gate}.\n\n` : ''}يرجى مراجعة الملف المرفق (خطاب الترحيب) للتفاصيل والتعليمات المهمة المتعلقة بالمعهد.
+
+سأكون متاحاً لمساعدتك وتقديم أي دعم قد تحتاج إليه.
+يمكنك التواصل معي على الرقم أدناه.
+
+مع خالص التحية والتقدير،
+
+منسق الدورة
+${coordinatorName}
++974 51466789`;
+
+  return letter;
+}
+
+function downloadWelcomeLetterAsWord() {
+  const courseName = document.getElementById('letter-course-name').value.trim();
+  const coordinator = document.getElementById('letter-coordinator').value.trim();
+  const trainer = document.getElementById('letter-trainer').value.trim();
+  const language = document.getElementById('letter-language').value;
+  const dateFrom = document.getElementById('letter-date-from').value;
+  const dateTo = document.getElementById('letter-date-to').value;
+  const time = document.getElementById('letter-time').value.trim();
+  const location = document.getElementById('letter-location').value.trim();
+  const gate = document.getElementById('letter-gate').value.trim();
+  const courseType = document.getElementById('letter-type').value;
+  const zoomLink = document.getElementById('letter-zoom-link').value.trim();
+
+  if (!courseName || !coordinator || !trainer || !dateFrom || !dateTo) {
+    alert('Please fill in all required fields (*).');
+    return;
+  }
+
+  let htmlContent = `
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+  body { 
+    font-family: 'Calibri', sans-serif;
+    line-height: 1.6;
+    margin: 1in;
+    color: #000;
+  }
+  p { margin: 0.5em 0; }
+  strong { font-weight: bold; }
+  .letter-body { margin-top: 1em; }
+</style>
+</head>
+<body>`;
+
+  if (language === 'english' || language === 'bilingual') {
+    const engLetter = generateEnglishLetter(courseName, coordinator, trainer, dateFrom, dateTo, time, location, gate, courseType, zoomLink);
+    htmlContent += `<div class="letter-body" style="direction: ltr;">
+${engLetter.split('\n').map(line => `<p>${line || '&nbsp;'}</p>`).join('')}
+</div>`;
+  }
+
+  if (language === 'arabic' || language === 'bilingual') {
+    if (language === 'bilingual') {
+      htmlContent += `<hr style="page-break-after: always; border: none; margin: 2em 0;">`;
+    }
+    const arLetter = generateArabicLetter(courseName, coordinator, trainer, dateFrom, dateTo, time, location, gate, courseType, zoomLink);
+    htmlContent += `<div class="letter-body" style="direction: rtl; text-align: right;">
+${arLetter.split('\n').map(line => `<p>${line || '&nbsp;'}</p>`).join('')}
+</div>`;
+  }
+
+  htmlContent += `</body></html>`;
+
+  const blob = new Blob([htmlContent], { type: 'application/msword' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Welcome_Letter_${courseName.replace(/\s+/g, '_')}.doc`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('Welcome letter downloaded', '📄');
 }
 
 function normalizeScheduleType(value) {
